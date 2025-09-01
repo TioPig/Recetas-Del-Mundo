@@ -1,0 +1,61 @@
+<ion-header >
+  <ion-toolbar>
+    <ion-title class="txt-naranjo">Receta Aleatoria</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+
+
+<ion-content class="row mt-4">
+
+  <div class=" text-center">
+    <img class="user-cheems" src="../../assets/img/user-cheems.png" alt="">
+    <h2 class="tx-azul tx700">Aleatorio</h2>
+    <p class="tx-cafe tx500">¿Te apetece probar algo delicioso? Descubre nuestros platos en la aplicación y elige tu favorito para disfrutar en casa. ¡Buen provecho!</p>
+    <ion-button class="redondeado" [routerLink]="['/seleccionar']">Volver</ion-button>
+  </div>
+
+  
+
+
+  <ion-card *ngIf="randomMeal">
+    <img class="text-center" src="{{ randomMeal.strMealThumb }}" alt="{{ randomMeal.strMealThumb }}">
+    <ion-card-header>
+      <ion-card-subtitle>Área: {{ randomMeal.strArea }}</ion-card-subtitle>
+      <ion-card-title class="txt-naranjo">{{ randomMeal.strMeal }}</ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <h3>Ingredientes:</h3>
+      <ul>
+        <li>{{ randomMeal.strIngredient1 }} | ({{ randomMeal.strMeasure1 }})</li>
+        <li>{{ randomMeal.strIngredient2 }} | ({{randomMeal.strMeasure2}})</li>
+        <li>{{ randomMeal.strIngredient3 }} | ({{randomMeal.strMeasure3}})</li>
+        <li>{{ randomMeal.strIngredient4 }} | ({{randomMeal.strMeasure4}})</li>
+        <li>{{ randomMeal.strIngredient5 }} | ({{randomMeal.strMeasure5}})</li>
+        <li>{{ randomMeal.strIngredient6 }} | ({{randomMeal.strMeasure6}})</li>
+        <li>{{ randomMeal.strIngredient7 }} | ({{randomMeal.strMeasure7}})</li>
+        <li>{{ randomMeal.strIngredient8 }} | ({{randomMeal.strMeasure8}})</li>
+        <li>{{ randomMeal.strIngredient9 }} | ({{randomMeal.strMeasure9}})</li>
+        <li>{{ randomMeal.strIngredient10 }} | ({{ randomMeal.strMeasure10}})</li>
+        <li>{{ randomMeal.strIngredient11}} | ({{ randomMeal.strMeasure11}})</li>
+        <li>{{ randomMeal.strIngredient12 }} | ({{ randomMeal.strMeasure12}})</li>
+        <li>{{ randomMeal.strIngredient13 }} | ({{ randomMeal.strMeasure13}})</li>
+        <li>{{ randomMeal.strIngredient14 }} | ({{ randomMeal.strMeasure14}})</li>
+        <li>{{ randomMeal.strIngredient15 }} | ({{ randomMeal.strMeasure15}})</li>
+      </ul>
+
+      <h3>Pasos:</h3>
+      <ol>
+        <li>
+          {{ randomMeal.strInstructions }}
+        </li>
+      </ol>
+      
+      <div class="acerca de text-center">
+        <a target="_blank" href="{{randomMeal.strSource}}"><button class="btn btn-secondary">Más información sobre {{randomMeal.strIngredient1}}</button></a>
+      </div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
+

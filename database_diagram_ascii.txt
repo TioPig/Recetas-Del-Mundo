@@ -1,0 +1,99 @@
+================================================================================
+                    DIAGRAMA RELACIONAL - RECETAS DEL MUNDO
+================================================================================
+
+                                    +-----------------+
+                                    |    USUARIO      |
+                                    +-----------------+
+                                    | * id_usr (PK)   |
+                                    |   nombre        |
+                                    |   email         |
+                                    |   password      |
+                                    |   rol           |
+                                    |   estado        |
+                                    +-----------------+
+                                             |
+                                             | 1:N
+                                             |
+                    +------------------------+------------------------+
+                    |                        |                        |
+                    |                        |                        |
+                    v                        v                        v
+            +-----------------+     +-----------------+     +-----------------+
+            |   CATEGORIA     |     |      PAIS       |     |     RECETA      |
+            +-----------------+     +-----------------+     +-----------------+
+            | * id_cat (PK)   |     | * id_pais (PK)  |     | * id_receta (PK)|
+            |   nombre        |     |   nombre        |     |   titulo        |
+            |   descripcion   |     |   descripcion   |     |   descripcion   |
+            |   id_usr (FK)   |     |   id_usr (FK)   |     |   instrucciones |
+            +-----------------+     +-----------------+     |   dificultad    |
+                                             |                        |   tiempo_prep   |
+                                             |                        |   porciones     |
+                                             |                        |   imagen_url    |
+                                             |                        |   id_cat (FK)   |
+                                             |                        |   id_pais (FK)  |
+                                             |                        |   id_usr (FK)   |
+                                             +------------------------+
+                                                      |
+                                                      | 1:N
+                                                      |
+                    +---------------------------------+------------------+
+                    |                                 |                  |
+                    |                                 |                  |
+                    v                                 v                  v
+            +-----------------+             +-----------------+    +-----------------+
+            |  RECETA_LIKE   |             | RECETA_COMENTARIO|    |RECETA_VALORACION|
+            +-----------------+             +-----------------+    +-----------------+
+            | * id_receta (PK)|             | * id_comentario  |    | * id_valoracion |
+            | * id_usr (PK)   |             |   comentario     |    |   valoracion    |
+            |   fecha_like    |             |   fecha_comentario|    |   fecha_valoracion|
+            +-----------------+             |   id_receta (FK) |    |   id_receta (FK)|
+                                             |   id_usr (FK)    |    |   id_usr (FK)   |
+                                             +-----------------+    +-----------------+
+
+================================================================================
+                    ENTIDADES ADICIONALES
+================================================================================
+
+            +-----------------+             +-----------------+
+            |    CARRUSEL     |             |      PAGO       |
+            +-----------------+             +-----------------+
+            | * id_caru (PK)  |             | * id_pago (PK)  |
+            |   nombre        |             |   order_id      |
+            |   url_imagen    |             |   amount        |
+            |   estado        |             |   status        |
+            |   fecha_creacion|             |   flow_token    |
+            |   id_usr (FK)   |             |   fecha_creacion|
+            +-----------------+             |   id_usr (FK)   |
+                                             +-----------------+
+
+================================================================================
+                    LEYENDA Y RELACIONES
+================================================================================
+
+RELACIONES PRINCIPALES:
+• Usuario (1) ────► (N) Categoria     (Usuario crea categorías)
+• Usuario (1) ────► (N) Pais          (Usuario crea países)
+• Usuario (1) ────► (N) Receta        (Usuario crea recetas)
+• Usuario (1) ────► (N) RecetaLike    (Usuario da likes)
+• Usuario (1) ────► (N) RecetaComentario (Usuario comenta)
+• Usuario (1) ────► (N) RecetaValoracion (Usuario valora)
+• Usuario (1) ────► (N) Carrusel      (Usuario crea elementos del carrusel)
+• Usuario (1) ────► (N) Pago          (Usuario realiza pagos)
+
+• Categoria (1) ────► (N) Receta      (Categoría clasifica recetas)
+• Pais (1) ────► (N) Receta           (País pertenece a recetas)
+
+• Receta (1) ────► (N) RecetaLike     (Receta recibe likes)
+• Receta (1) ────► (N) RecetaComentario (Receta recibe comentarios)
+• Receta (1) ────► (N) RecetaValoracion (Receta recibe valoraciones)
+
+NOTAS TÉCNICAS:
+• * = Clave Primaria (PK)
+• FK = Clave Foránea (Foreign Key)
+• RecetaLike tiene clave primaria compuesta (id_receta + id_usr)
+• Total entidades: 9
+• Total relaciones: 12
+• Base de datos: PostgreSQL + MongoDB
+
+================================================================================

@@ -1,0 +1,191 @@
+Diagrama de endpoints y relación con la base de datos (API Recetas)
+Fecha: 2025-08-28
+
+Resumen
+-------
+Este archivo contiene un diagrama ASCII que muestra todos los endpoints detectados
+en el backend, el flujo de la petición (cliente -> controller -> service -> repo -> tabla)
+y el mapeo de cada endpoint a la(s) tabla(s) afectadas en la base de datos Postgres.
+
+Diagrama general
+-----------------
+
+                                 +------------------+
+                                 |   Cliente / UI   |
+                                 | (frontend / curl)|
+                                 +--------+---------+
+                                          |
+                                          | HTTP (GET/POST/PUT/DELETE)
+                                          v
++-----------------------------------------------------------------------------------+
+|                           Controllers (HTTP entrypoints)                         |
+|                                                                                   |
+|  /recetas        -> RecetaController          /paises    -> PaisController       |
+|  /usuarios       -> UsuarioController         /categorias-> CategoriaController  |
+|  /engagement     -> EngagementController      /carruseles-> CarruselController  |
+|  /flow/button    -> PaymentController         /flow/webhook -> PaymentController |
++----------------------+----------------------------+----------------------------+
+                       |                            |
+                       v                            v
++------------------------------+        +-------------------------------+
+|       Service Layer          |        |   PaymentService (flow logic) |
+| - RecetaService              |        | - createFlowButton(req)       |
+| - UsuarioService             |        | - handleWebhook(payload)      |
+| - PaisService                |        +---------------+---------------+
+| - CategoriaService           |                        |
+| - CarruselService            |                        v
+| - EngagementService          |             +-------------------------+
++------------------------------+             | PagoRepository (JPA)    |
+                       |                      +-----------+-------------+
+                       v                                  |
++------------------------------+                          v
+|     Repositories (JPA)       |               Postgres (recetas-postgres)
+| - RecetaRepository           |               +-------------------------------+
+| - UsuarioRepository          |               | Tables (public schema)         |
+| - PaisRepository             |               | - receta                       |
+| - CategoriaRepository        |               | - usuario                      |
+| - CarruselRepository         |               | - pais                         |
+| - RecetaComentarioRepository |               | - categoria                    |
+| - RecetaLike / valoracion    |               | - receta_comentario            |
+| - PagoRepository             |               | - receta_like                  |
++------------------------------+               | - receta_valoracion            |
+                                               | - pago                         |
+                                               +-------------------------------+
+
+Diagrama detallado por controlador (endpoints -> tablas)
+-------------------------------------------------------
+
+RecetaController  (base: /recetas)
+  GET  /recetas                   -> RecetaService.listarTodasRecetas()
+     READ FROM table: receta
+  GET  /recetas/{id_receta}       -> receta (select by id)
+  POST /recetas                   -> crearReceta(RecetaDTO)
+     WRITE TO table: receta (insert)
+     ejemplo payload: { nombre, ingrediente, preparacion, id_cat, id_pais, id_usr }
+  GET  /recetas/nombre/{nombre}   -> receta (select by name)
+  GET  /recetas/buscar/nombre/{n} -> receta (partial match)
+  GET  /recetas/pais/{id_pais}    -> receta (select by id_pais)
+  PUT  /recetas/{id_receta}       -> update receta (update table receta)
+
+PaisController (base: /paises)
+  GET  /paises                    -> pais (select *)
+  GET  /paises/{id_pais}          -> pais (select by id)
+  GET  /paises/nombre/{nombre}    -> pais (select by name)
+  POST /paises                    -> insert into pais
+  PUT  /paises/{id_pais}          -> update pais
+  DELETE /paises/{id_pais}        -> delete pais
+
+UsuarioController (base: /usuarios)
+  GET  /usuarios                  -> usuario (select *)
+  GET  /usuarios/{id_usr}         -> usuario (select by id)
+  POST /usuarios                  -> insert usuario
+     payload: UsuarioDTO {nombre, apellido, user, password,...}
+  PUT  /usuarios/{id_usr}         -> update usuario
+  DELETE /usuarios/{id_usr}       -> delete usuario
+  POST /usuarios/login            -> authenticate; sets token (usuario.token)
+
+CategoriaController (base: /categorias)
+  GET /categorias                 -> categoria (select *)
+  GET /categorias/{id_cat}        -> categoria (select by id)
+  GET /categorias/nombre/{nombre} -> categoria (select by name)
+  POST /categorias                -> insert categoria
+  PUT /categorias/{id_cat}        -> update
+  DELETE /categorias/{id_cat}     -> delete
+
+CarruselController (base: /carruseles)
+  GET /carruseles                 -> carrusel (select *)
+  GET /carruseles/{id_caru}       -> carrusel (select by id)
+  GET /carruseles/nombre/{nombre} -> select by name
+  POST /carruseles                -> insert carrusel
+  PUT /carruseles/{id_caru}       -> update
+  DELETE /carruseles/{id_caru}    -> delete
+
+EngagementController (base: /engagement)
+  POST /engagement/comment        -> RecetaComentario entity (INSERT into receta_comentario)
+     payload: RecetaComentario { id_receta, id_usr, comentario }
+  POST /engagement/rating         -> RecetaValoracion (INSERT/UPDATE in receta_valoracion)
+     payload: { id_receta, id_usr, score }
+  POST /engagement/like           -> RecetaLike (INSERT/UPDATE in receta_like)
+     params: idReceta, idUsr, liked
+
+PaymentController (base: /flow)
+  POST /flow/button               -> PaymentService.createFlowButton(req)
+     - construye FlowButtonResponse (token + checkoutUrl)
+     - persiste un registro Pago via PagoRepository (tabla: pago)
+     ejemplo request: { orderId, amount, description }
+     ejemplo response: { token, checkoutUrl, status }
+  POST /flow/webhook              -> PaymentService.handleWebhook(payload, signature)
+     - actualmente stub: log + persist demo Pago
+     - recomendado: validar firma y actualizar estado de `pago`
+
+Tablas y campos clave (resumen de entidades)
+--------------------------------------------
+
+- tabla: receta
+  - id_receta (PK int)
+  - nombre (varchar)
+  - url_imagen
+  - ingrediente (text)
+  - preparacion (text)
+  - estado (int)
+  - id_cat (FK -> categoria)
+  - id_pais (FK -> pais)
+  - fecha_creacion
+  - id_usr
+
+- tabla: usuario
+  - id_usr (PK)
+  - nombre, apellido, user, password
+  - activo (int)
+  - token (jwt)
+
+- tabla: pais
+  - id_pais, nombre, url_imagen, estado, fecha_creacion, comentario, id_usr
+
+- tabla: categoria
+  - id_cat, nombre, estado, fecha_creacion, comentario, imagen, id_usr
+
+- tabla: carrusel
+  - id_caru, nombre, url_imagen, estado, fecha_creacion, id_usr
+
+- tabla: receta_comentario
+  - id, id_receta, id_usr, comentario (text), fecha (LocalDateTime)
+
+- tabla: receta_like
+  - composite id (id_receta + id_usr), liked (bool), fecha
+
+- tabla: receta_valoracion
+  - id, id_receta, id_usr, score (smallint), fecha
+
+- tabla: pago
+  - id_pago (PK)
+  - order_id (varchar)
+  - amount (int)
+  - status (varchar)        -- ej.: simulated, created, paid
+  - flow_token (varchar)
+  - fecha_creacion (timestamp)
+  - id_usr (int, opcional)
+
+Ejemplos rápidos
+----------------
+
+- Crear botón Flow
+  Request POST /flow/button
+  { "orderId": "order-123", "amount": 1500, "description": "Compra X" }
+
+  Response 200 OK
+  { "token":"simulated-token-order-123", "checkoutUrl":"https://sandbox.flow.cl/checkout/simulated?order=order-123", "status":"simulated" }
+
+  Efecto DB: inserta fila en `pago` con order_id, amount, status, flow_token, fecha_creacion.
+
+- Webhook Flow (ejemplo)
+  POST /flow/webhook  (payload JSON de Flow; header X-Flow-Signature)
+  Comportamiento actual: crea un registro demo en `pago`. Recomendado: buscar por order_id o token y actualizar status.
+
+Notas y recomendaciones
+---------------------
+- Seguridad: varias rutas requieren JWT; para pruebas autenticadas usar /usuarios/login o permitir temporalmente `/flow/**`.
+- Webhook: implementar validación de firma (`flow.private.key`) y actualizar `pago` existente en vez de crear nuevos registros.
+- Consistencia de fechas: algunas entidades usan String para `fecha_creacion` y otras LocalDateTime; considerar homogeneizar a timestamp/LocalDateTime.
+
+Fin del documento.

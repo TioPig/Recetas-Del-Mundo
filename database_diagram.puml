@@ -1,0 +1,110 @@
+@startuml Diagrama Relacional - Recetas del Mundo
+
+entity Usuario {
+    * id_usr : INTEGER <<generated>>
+    --
+    * nombre : VARCHAR(255)
+    * email : VARCHAR(255)
+    * password : VARCHAR(255)
+    * fecha_registro : TIMESTAMP
+    * rol : VARCHAR(50)
+    * estado : INTEGER
+}
+
+entity Categoria {
+    * id_cat : INTEGER <<generated>>
+    --
+    * nombre : VARCHAR(255)
+    * descripcion : TEXT
+    * fecha_creacion : TIMESTAMP
+    * id_usr : INTEGER
+}
+
+entity Pais {
+    * id_pais : INTEGER <<generated>>
+    --
+    * nombre : VARCHAR(255)
+    * descripcion : TEXT
+    * fecha_creacion : TIMESTAMP
+    * id_usr : INTEGER
+}
+
+entity Receta {
+    * id_receta : INTEGER <<generated>>
+    --
+    * titulo : VARCHAR(255)
+    * descripcion : TEXT
+    * instrucciones : TEXT
+    * tiempo_preparacion : INTEGER
+    * dificultad : VARCHAR(50)
+    * porciones : INTEGER
+    * imagen_url : VARCHAR(500)
+    * fecha_creacion : TIMESTAMP
+    * id_cat : INTEGER
+    * id_pais : INTEGER
+    * id_usr : INTEGER
+}
+
+entity RecetaLike {
+    * id_receta : INTEGER
+    * id_usr : INTEGER
+    --
+    * fecha_like : TIMESTAMP
+}
+
+entity RecetaComentario {
+    * id_comentario : INTEGER <<generated>>
+    --
+    * comentario : TEXT
+    * fecha_comentario : TIMESTAMP
+    * id_receta : INTEGER
+    * id_usr : INTEGER
+}
+
+entity RecetaValoracion {
+    * id_valoracion : INTEGER <<generated>>
+    --
+    * valoracion : INTEGER
+    * fecha_valoracion : TIMESTAMP
+    * id_receta : INTEGER
+    * id_usr : INTEGER
+}
+
+entity Carrusel {
+    * id_caru : INTEGER <<generated>>
+    --
+    * nombre : VARCHAR(255)
+    * url_imagen : VARCHAR(500)
+    * estado : INTEGER
+    * fecha_creacion : TIMESTAMP
+    * id_usr : INTEGER
+}
+
+entity Pago {
+    * id_pago : INTEGER <<generated>>
+    --
+    * order_id : VARCHAR(255)
+    * amount : INTEGER
+    * status : VARCHAR(50)
+    * flow_token : VARCHAR(255)
+    * fecha_creacion : TIMESTAMP
+    * id_usr : INTEGER
+}
+
+' Relaciones
+Usuario ||--o{ Categoria : "crea"
+Usuario ||--o{ Pais : "crea"
+Usuario ||--o{ Receta : "crea"
+Usuario ||--o{ RecetaLike : "da like"
+Usuario ||--o{ RecetaComentario : "comenta"
+Usuario ||--o{ RecetaValoracion : "valora"
+Usuario ||--o{ Carrusel : "crea"
+Usuario ||--o{ Pago : "realiza"
+
+Categoria ||--o{ Receta : "clasifica"
+Pais ||--o{ Receta : "pertenece"
+Receta ||--o{ RecetaLike : "recibe likes"
+Receta ||--o{ RecetaComentario : "recibe comentarios"
+Receta ||--o{ RecetaValoracion : "recibe valoraciones"
+
+@enduml

@@ -1,0 +1,80 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Comidas por pais</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Comidas por pais</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <div class="seccion-user text-center">
+          <img class="user-cheems" src="../../assets/img/user-cheems.png" alt="">
+        <h2 class="tx-azul ">Comidas <br> <span class="tx700">Por País </span></h2>
+        <p class="tx-cafe tx500">Lista de comidas típicas de diferentes países para probar y disfrutar.</p>
+        <ion-button class="redondeado" [routerLink]="['/seleccionar']">Volver</ion-button>
+        <ion-item>
+          <ion-label>Ingresa un país <ion-text color="danger">*</ion-text></ion-label>
+          <ion-input required></ion-input>
+        </ion-item>
+        </div>
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  
+      <ion-grid>
+        <ion-row>
+          <ion-col>
+            <h3>Seleccione un país</h3>
+            <ion-list>
+              <ion-item *ngFor="let p of pais" button (click)="seleccionarPais(p.id_pais)">
+                <ion-thumbnail slot="start"><img src="{{p.url_imagen}}"/></ion-thumbnail>
+                <ion-label>{{p.nombre}}</ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <ion-grid *ngIf="recetas && recetas.length">
+        <ion-row>
+          <ion-col>
+            <h3>Recetas del país</h3>
+            <ion-card *ngFor="let receta of recetas">
+              <ion-item>
+                <ion-thumbnail slot="start"><img [src]="receta.url_imagen"/></ion-thumbnail>
+                <ion-label>
+                  <h2>{{receta.nombre}}</h2>
+                  <p>{{receta.ingrediente}}</p>
+                </ion-label>
+              </ion-item>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+  <!-- <ion-card-header>
+      <ion-card-title>Card Title</ion-card-title>
+      <ion-card-subtitle>Card Subtitle</ion-card-subtitle>
+    </ion-card-header> -->
+
+
+    <ion-card-content *ngFor="let comida of pais">
+      <ion-list >
+        <ion-item>
+          <ion-thumbnail slot="start">
+            <img alt="texto ejemplo" src="{{comida.url_imagen}}" />
+          </ion-thumbnail>
+          <ion-label>{{comida.nombre}}</ion-label>
+          <p>detalle</p>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+
+</ion-content>

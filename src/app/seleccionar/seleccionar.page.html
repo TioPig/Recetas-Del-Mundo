@@ -1,0 +1,30 @@
+<ion-header [translucent]="true">
+    <ion-toolbar>
+      <ion-title>Seleccione su categoría :D</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  
+  <ion-content [fullscreen]="true" class="ion-text-center background-image" [scrollEvents]="true">
+    <ion-header collapse="condense">
+      <ion-toolbar>
+        <!-- <ion-title size="large">seleccionar</ion-title> -->
+      </ion-toolbar>
+    </ion-header>
+  
+    <img class="user-cheems" src="../../assets/img/user-cheems.png" alt="">
+    <h2 class="tx-azul tx700">Seleccione su categoría :D</h2>
+    <p class="tx-cafe tx500">¿Te apetece probar algo delicioso? Descubre nuestros platos en la aplicación y elige tu favorito para disfrutar en casa. ¡Buen provecho!</p>
+  
+    <img [routerLink]="['/comidas-por-pais']" class="secciones" src="../../assets/img/por-pais.png" alt="">
+    <img [routerLink]="['/comidas-por-tipo']" class="secciones" src="../../assets/img/por-tipo.png" alt="">
+    <img [routerLink]="['/postres']" class="secciones" src="../../assets/img/postres.png" alt="">
+    <img [routerLink]="['/comidas-aleatorias']" class="secciones" src="../../assets/img/aleatoria.png" alt="">
+  
+    <ion-button class="text-center" shape="round" >Subir</ion-button>
+    <a href="home"><ion-button class="text-center" shape="round" [routerLink]="['/home']">Volver</ion-button></a>
+  
+  </ion-content>
+  
+  
+  
+  <!-- este archivo challa -->

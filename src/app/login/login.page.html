@@ -1,0 +1,44 @@
+<ion-header>
+  <!-- <ion-navbar>
+    <ion-title>login</ion-title>
+  </ion-navbar> -->
+</ion-header>
+
+<ion-content padding>
+
+
+  <ion-card center>
+    <ion-card-header>
+      <b>Ingreso de Usuarios</b>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-label fixed>Usuario:</ion-label>
+          <ion-input type="text"></ion-input>
+          <!-- <ion-input type="text"[(ngModel)]="user"></ion-input> -->
+        </ion-item>
+        <ion-item>
+          <ion-label fixed>Password:</ion-label>
+          <ion-input type="password"></ion-input>
+          <!-- <ion-input type="password"[(ngModel)]="pass"></ion-input> -->
+        </ion-item>
+      </ion-list>
+      <div padding>
+        <ion-button class="redondeado" [routerLink]="['/seleccionar']">Iniciar</ion-button>
+        <!-- <button ion-button block (click)="Signup()">Sign up</button> -->
+      </div>
+      <hr>
+      <div class="usuarios-activos">
+        <h5>Usuarios activos:</h5>
+        <p *ngFor="let user of usuario"><ion-icon name="radio-button-on-outline" class="naranjo"></ion-icon> {{user.nombre}}</p>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  
+  <div class="boton-centrado">
+    <ion-button class="redondeado center" [routerLink]="['/home']">regresar</ion-button>
+  </div>
+
+</ion-content>
