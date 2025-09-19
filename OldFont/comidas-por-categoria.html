@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comida Por Categoria</title>
+  <link rel="icon" href="img/user-cheems.png" type="image/x-icon">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+  <header class="bg-naranjo-op z-index-d">
+    <nav class="navbar navbar-expand-lg navbar-light bg-naranjo-op">
+        <div class="container text-light pt-2">
+            <a class="navbar-brand tx-azul" href="index.html">
+                <div class="titulorecetas">
+                    <p class="titulo-receta display-6">Recetas</p>
+                    <p class="titulo-mundo">Del mundo</p>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav ms-auto">
+                  <li class="nav-item">
+                    <a href="index.html" class="nav-link links text-decoration-none text-light">Inicio</a>
+                </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle links text-decoration-none text-light" href="#" id="navbarDropdownPaises" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Paises
+                                </a>
+                                <ul class="dropdown-menu" id="navbarDropdownPaisesMenu" aria-labelledby="navbarDropdownPaises">
+                                    <!-- Los países se cargarán aquí dinámicamente -->
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                              <a class="nav-link dropdown-toggle links text-decoration-none text-light" href="#" id="navbarDropdownCategorias" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                  Categorías
+                              </a>
+                              <ul class="dropdown-menu" id="navbarDropdownCategoriasMenu" aria-labelledby="navbarDropdownCategorias">
+                                  <!-- Las categorías se cargarán aquí dinámicamente -->
+                              </ul>
+                          </li>
+                    <li class="nav-item"><a class="nav-link links text-decoration-none text-light" href="#" id="recetaRandomLink">Receta aleatoria</a></li>
+
+                    <li class="nav-item"><a class="nav-link links text-decoration-none text-light" href="login.html">Acceder <i
+                                class="fa fa-solid fa-user"></i></a></li>
+                    <li class="nav-item btn btn-danger ms-2"><a class="nav-link text-light text-decoration-none"
+                            href="register.html">Registrarse</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div class="modal fade modal-lg" id="recetaAleatoriaModal" tabindex="-1" aria-labelledby="recetaAleatoriaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="recetaAleatoriaModalLabel">Receta Aleatoria</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="recetaAleatoriaModalBody">
+              <!-- Contenido de la receta aleatoria se cargará aquí -->
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div class="hero-categorias bg-crema py-3 pt-3 espaciado-titulo">
+  <div class="container">
+    <div class="row text-center">
+      <p class="display-2 tx-cafe fw-500" id="nombreCategoria"></p>
+    </div>
+  </div>
+</div>
+
+<!-- cards -->
+
+<div class="container py-3 my-3 z-index-b">
+  <div class="row" id="recetas">
+
+
+ 
+
+
+  </div>
+</div>
+
+
+<div class="container">
+    <div class="row text-center">
+      <hr class="col-md-8 hr align-self-center formulario-img">
+      <p class="col-4 texto-mediano tx-cafe lato-bold">Categorias</p>
+    </div>
+  </div>
+
+    <div class="categorias">
+      <div class="container">
+        <div class="row" id="categorias">
+
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <footer class="bg-naranjo text-light">
+
+      <!-- place footer here -->
+      <div class="container pt-2 text-center ">
+          <div class="row">
+              <div class="col-md-2">
+                  <div class="titulorecetas">
+                      <p class="titulo-receta display-6">Recetas</p>
+                      <p class="titulo-mundo">Del mundo</p>
+                  </div>
+              </div>
+              <div class="col-md-10 align-self-center">
+                  <p id="anno">{año}, Recetas del mundo - un sitio donde podr ás encontrar la receta perfecta para esa ocasión.</p>
+              </div>
+          </div>
+      </div>
+  </footer>
+
+  </div>
+
+  <script src="js/categoria.js"></script>
+  <script src="js/script.js"></script>
+</body>
+
+</html>
