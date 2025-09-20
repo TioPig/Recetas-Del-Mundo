@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -9,10 +9,30 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import SearchIcon from '@mui/icons-material/Search';
+import Avatar from '@mui/material/Avatar';
+import UserSidebar from './UserSidebar';
+import { isAuthenticated } from '../api';
 
 export default function Header(){
   const [q, setQ] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthLocal, setIsAuthLocal] = useState(isAuthenticated());
   const navigate = useNavigate();
+
+  useEffect(()=>{
+    const onStorage = (e) => {
+      if(e.key === 'authToken' || e.key === 'user'){
+        setIsAuthLocal(isAuthenticated());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    const onAuthChanged = () => setIsAuthLocal(isAuthenticated());
+    window.addEventListener('authChanged', onAuthChanged);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('authChanged', onAuthChanged);
+    };
+  }, []);
 
   const submitSearch = (e) => {
     e?.preventDefault();
@@ -46,7 +66,19 @@ export default function Header(){
         <Button color="inherit" component={RouterLink} to="/" sx={{ fontFamily: 'Lato, sans-serif' }}>Inicio</Button>
         <Button color="inherit" component={RouterLink} to="/paises" sx={{ fontFamily: 'Lato, sans-serif' }}>Países</Button>
         <Button color="inherit" component={RouterLink} to="/categorias" sx={{ fontFamily: 'Lato, sans-serif' }}>Categorías</Button>
-        <Button color="inherit" component={RouterLink} to="/login" sx={{ fontFamily: 'Lato, sans-serif' }}>Acceder</Button>
+        {isAuthLocal ? (
+          <IconButton onClick={()=> setSidebarOpen(true)} sx={{ ml: 1 }}>
+            <Avatar alt="user" src="/img/user-cheems.png" />
+          </IconButton>
+        ) : (
+          <Button color="inherit" component={RouterLink} to="/login" sx={{ fontFamily: 'Lato, sans-serif' }}>Acceder</Button>
+        )}
+        <UserSidebar open={sidebarOpen} onClose={()=> setSidebarOpen(false)} onLogout={() => {
+          try{ localStorage.removeItem('authToken'); localStorage.removeItem('user'); }catch(e){}
+          setSidebarOpen(false);
+          setIsAuthLocal(false);
+          navigate('/');
+        }} />
       </Toolbar>
     </AppBar>
   );

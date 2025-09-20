@@ -40,9 +40,12 @@ export default function Login(){
       if(token) localStorage.setItem('authToken', token);
       try{ localStorage.setItem('user', typeof user === 'string' ? user : JSON.stringify(user)); }catch(e){ /* ignore */ }
 
-      setLoading(false);
-      // navigate home
-      navigate('/');
+  // notify other parts of the app in this window that auth changed
+  try{ window.dispatchEvent(new Event('authChanged')); }catch(e){}
+
+  setLoading(false);
+  // navigate home
+  navigate('/');
     }catch(e){
       setLoading(false);
       setError('Credenciales inválidas o error de conexión');

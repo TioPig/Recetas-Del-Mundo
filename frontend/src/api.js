@@ -12,8 +12,15 @@ api.interceptors.request.use((config) => {
   try{
     const token = localStorage.getItem('authToken');
     if(token && token !== 'null' && token !== 'undefined' && token.toString().trim() !== ''){
-      config.headers = config.headers || {};
-      config.headers['Authorization'] = `Bearer ${token}`;
+      // Avoid sending Authorization header on simple GET requests to public endpoints
+      // (some backends reject CORS preflight when Authorization is present)
+      const method = (config.method || '').toLowerCase();
+      if(method && method === 'get'){
+        // do not attach token for GET by default
+      }else{
+        config.headers = config.headers || {};
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
     }
   }catch(e){}
   return config;

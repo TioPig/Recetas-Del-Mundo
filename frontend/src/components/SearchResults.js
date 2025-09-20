@@ -135,15 +135,6 @@ export default function SearchResults(){
           <DialogTitle>{selectedReceta?.nombre}</DialogTitle>
           <DialogContent dividers>
             <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} sx={{ width: '100%', height: 360, objectFit: 'cover', borderRadius: 1 }} />
-            <Stack direction="row" spacing={1} sx={{ mt: 2, alignItems: 'center' }}>
-              <IconButton aria-label="like" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postLikeReceta(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}><ThumbUpIcon /></IconButton>
-              <IconButton aria-label="star" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postStarReceta(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}><StarIcon /></IconButton>
-              <IconButton aria-label="fav" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postFavoritoReceta(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}><BookmarkIcon /></IconButton>
-              <Box sx={{ ml: 2, color: 'text.secondary' }}>
-                <span>{selectedReceta?.likes || selectedReceta?.likesCount || 0} Me gusta</span>
-                <span style={{ marginLeft: 12 }}>{selectedReceta?.stars || selectedReceta?.starsCount || 0} Estrellas</span>
-              </Box>
-            </Stack>
             <Typography sx={{ mt: 2, fontWeight: 700 }}>Ingredientes</Typography>
             <List>
               {(selectedReceta?.ingredientes || []).map(i=> (<ListItem key={i.idIngrediente}><ListItemText primary={i.nombre} /></ListItem>))}
