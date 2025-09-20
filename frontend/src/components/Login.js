@@ -15,7 +15,7 @@ import { loginUsuario, login } from '../api';
 import Link from '@mui/material/Link';
 
 export default function Login(){
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,13 +24,13 @@ export default function Login(){
 
   const handleSubmit = async () => {
     setError(null);
-    if(!username || !password){ setError('Completa usuario y contraseña'); return; }
+  if(!email || !password){ setError('Completa email y contraseña'); return; }
     setLoading(true);
     try{
       // try /api/usuarios/login first then fallback to /api/login
       let res = null;
-      try{ res = await loginUsuario({ username, password }); }catch(e){ /* fallback below */ }
-      if(!res){ res = await login({ username, password }); }
+  try{ res = await loginUsuario({ email, password }); }catch(e){ /* fallback below */ }
+  if(!res){ res = await login({ email, password }); }
 
       const data = res && res.data ? res.data : res;
       // attempt to extract token and user from common shapes
@@ -64,7 +64,7 @@ export default function Login(){
             <Box sx={{ width: '100%' }}>
               <Typography variant="h3" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900, color: '#99682E', mt: { xs: 0, md: '-1.5rem' }, fontSize: { xs: '1.6rem', md: '2rem' } }}>Bienvenid@</Typography>
               <Box sx={{ mt: 2, width: '100%', maxWidth: 420, mx: { xs: 0, md: 0 } }}>
-              <TextField fullWidth label="Usuario" variant="outlined" sx={{ mb: 2 }} value={username} onChange={(e)=> setUsername(e.target.value)} />
+              <TextField fullWidth label="Email" variant="outlined" sx={{ mb: 2 }} value={email} onChange={(e)=> setEmail(e.target.value)} />
               <TextField fullWidth label="Contraseña" type={showPassword? 'text' : 'password'} variant="outlined" sx={{ mb: 2 }} value={password} onChange={(e)=> setPassword(e.target.value)} InputProps={{ endAdornment: (
                 <InputAdornment position="end">
                   <IconButton aria-label="toggle password visibility" onClick={()=> setShowPassword(s => !s)} edge="end">
