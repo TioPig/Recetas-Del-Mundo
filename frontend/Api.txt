@@ -1,6 +1,4 @@
-API Recetas
-http://168.181.187.137:8081 - Generated server url
-receta-controller
+API Recetas - Documentación dinámica
 
 
 GET
@@ -120,6 +118,12 @@ GET
 /estrellas/stats/{idReceta}
 donacion-controller
 
+
+POST
+/donaciones/create-session
+
+GET
+/donaciones/{id}
 comentario-controller
 
 
