@@ -37,6 +37,23 @@ export const getRecetasByPais = (idPais) => api.get(`/recetas/pais/${idPais}`);
 export const getRecetasByCategoria = (idCat) => api.get(`/recetas/categoria/${idCat}`);
 export const searchRecetasByNombre = (nombre) => api.get(`/recetas/nombre/${encodeURIComponent(nombre)}`);
 
+// Helper to get recetas by usuario. Try endpoint first, otherwise fall back to client-side filter.
+export const getRecetasByUsuario = async (userId) => {
+  if(!userId) return Promise.resolve({ data: [] });
+  try{
+    return await api.get(`/recetas/usuario/${userId}`);
+  }catch(e){
+    const r = await api.get('/recetas');
+    const data = r && r.data ? r.data : r;
+    const list = Array.isArray(data) ? data : (data?.recetas || data?.items || []);
+    const filtered = list.filter(item => {
+      const uid = item.idUsr || item.idUsuario || item.createdBy || item.autorId || item.userId;
+      return uid && String(uid) === String(userId);
+    });
+    return { data: filtered };
+  }
+};
+
 // Usuarios / Auth
 export const getUsuarios = () => api.get('/api/usuarios/');
 export const getUsuario = (id) => api.get(`/api/usuarios/${id}`);
@@ -54,17 +71,18 @@ export const getCategorias = () => api.get('/categorias/');
 export const getCategoria = (id) => api.get(`/categorias/${id}`);
 
 // Favoritos / Me gustas / Comentarios (ejemplos)
-export const getFavoritos = () => api.get('/api/usuarios/favoritos');
-export const postFavorito = (data) => api.post('/api/usuarios/favoritos', data);
-export const deleteFavorito = (data) => api.delete('/api/usuarios/favoritos', { data });
+// According to Api.txt the favorites endpoints live under `/usuarios/favoritos` (no /api prefix)
+export const getFavoritos = () => api.get('/usuarios/favoritos');
+export const postFavorito = (data) => api.post('/usuarios/favoritos', data);
+export const deleteFavorito = (data) => api.delete('/usuarios/favoritos', { data });
 
 // Likes / Stars / Comentarios por receta
 export const postLikeReceta = (recetaId, data = {}) => api.post(`/recetas/${recetaId}/likes`, data);
 export const postStarReceta = (recetaId, data = {}) => api.post(`/recetas/${recetaId}/stars`, data);
 export const postFavoritoReceta = (recetaId, data = {}) => api.post(`/recetas/${recetaId}/favorito`, data);
 
-export const getComentariosReceta = (recetaId) => api.get(`/recetas/${recetaId}/comentarios`);
-export const postComentarioReceta = (recetaId, comentario) => api.post(`/recetas/${recetaId}/comentarios`, comentario);
+export const getComentariosReceta = (recetaId) => api.get(`/comentarios/receta/${recetaId}`);
+export const postComentarioReceta = (recetaId, comentario) => api.post(`/comentarios/receta/${recetaId}`, comentario);
 
 // Auth helper (simple local-storage based check)
 export const isAuthenticated = () => {

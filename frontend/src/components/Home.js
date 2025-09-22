@@ -39,8 +39,8 @@ export default function Home(){
       {/* Como funciona */}
       <Box sx={{ backgroundColor: '#F9E9AE', py: 6 }}>
         <Container>
-        <Box sx={{ width: '100%', my: 3, display: 'flex', justifyContent: 'center' }}>
-          <Box sx={{ width: '80%', borderTop: '2px solid rgba(153,104,46,0.25)' }} />
+        <Box>
+          <Box/>
         </Box>
           <Stack spacing={3} alignItems="center">
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -97,11 +97,11 @@ export default function Home(){
       <Container maxWidth="xl" sx={{ py: 4, maxWidth: '1400px' }}>
         <Box textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center' }}>
-            <Box sx={{ flex: '1 1 30%', maxWidth: 360, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
+            <Box sx={{ flex: '1 1 30%', maxWidth: 385, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
             <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
             <Typography variant="h4" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>PAÍSES</Typography>
             <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
-            <Box sx={{ flex: '1 1 30%', maxWidth: 360, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
+            <Box sx={{ flex: '1 1 30%', maxWidth: 385, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
           </Box>
           <Box sx={{ textAlign: 'center', mt: 2 }}>
             <PaisesPreview />
@@ -112,7 +112,7 @@ export default function Home(){
       {/* Divider between PAÍSES and RECETA TRENDING TOPIC */}
       <Container sx={{ py: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-          <Box sx={{ width: { xs: '90%', md: '60%' }, borderTop: '4px solid rgba(153,104,46,0.85)', borderRadius: 1 }} />
+          <Box sx={{ width: { xs: '95%', md: '88%' }, borderTop: '2px solid rgba(153,104,46,0.85)', borderRadius: 1 }} />
         </Box>
       </Container>
 

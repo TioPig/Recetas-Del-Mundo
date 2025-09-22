@@ -11,6 +11,8 @@ import Categorias from './components/Categorias';
 import RecetasByCategoria from './components/RecetasByCategoria';
 import RecetasByPais from './components/RecetasByPais';
 import SearchResults from './components/SearchResults';
+import UserFavoritos from './components/UserFavoritos';
+import UserRecetas from './components/UserRecetas';
 import Footer from './components/Footer';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
             <Route path="/categorias" element={<Categorias />} />
             <Route path="/categorias/:id" element={<RecetasByCategoria />} />
             <Route path="/buscar" element={<SearchResults />} />
+            <Route path="/mi/favoritos" element={<UserFavoritos />} />
+            <Route path="/mi/recetas" element={<UserRecetas />} />
           </Routes>
         </Box>
         <Footer />

@@ -106,7 +106,7 @@ export default function RecetasByCategoria(){
         </Container>
       </Box>
 
-  <Container maxWidth="xl" sx={{ py: 4, maxWidth: '1400px' }}>
+  <Container maxWidth="xl" sx={{ py: 4, px: 2, maxWidth: '1400px', mx: 'auto' }}>
         {loading && <Typography>Loading...</Typography>}
         {error && <Typography color="error">{error}</Typography>}
         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
@@ -116,9 +116,9 @@ export default function RecetasByCategoria(){
         <Grid container spacing={2} id="recetas" justifyContent="center">
           {recetas.length === 0 && !loading && <Grid item xs={12}><Typography>No se encontraron recetas para esta categoría.</Typography></Grid>}
           {filteredRecetas.slice((page-1)*perPage, page*perPage).map(r => (
-            <Grid item key={r.idReceta || r.id} sx={{ width: { xs: '100%', sm: '48%', md: 300 }, maxWidth: 300 }}>
+            <Grid item key={r.idReceta || r.id} sx={{ width: { xs: '100%', sm: '48%', md: '23%' } }}>
               <Box sx={{ border: '1px solid #eee', p: 2, borderRadius: 1, height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', width: '100%' }}>
-                <Box component="img" src={r.urlImagen || 'https://placehold.co/600x360'} alt={r.nombre} sx={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }} />
+                <Box component="img" src={r.urlImagen || 'https://placehold.co/600x360'} alt={r.nombre} onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} sx={{ width: '100%', height: 120, maxHeight: 140, objectFit: 'cover', borderRadius: 1 }} />
                 <Typography sx={{ mt: 1, fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{r.nombre}</Typography>
                 <Typography color="text.secondary" sx={{ mt: 1, flexGrow: 1 }}>{shortText(r.preparacion, 100)}</Typography>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -142,15 +142,15 @@ export default function RecetasByCategoria(){
         )}
 
         <Dialog open={openReceta} onClose={handleCloseReceta} fullWidth maxWidth="md">
-          <DialogTitle sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{selectedReceta?.nombre}</DialogTitle>
+            <DialogTitle sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{selectedReceta?.nombre}</DialogTitle>
           <DialogContent dividers>
-            <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} sx={{ width: '100%', height: 360, objectFit: 'cover', borderRadius: 1 }} />
+            <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} sx={{ width: '100%', height: 360, maxHeight: 480, objectFit: 'cover', borderRadius: 1 }} />
             <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Ingredientes</Typography>
-            <List>
-              {(selectedReceta?.ingredientes || []).map(i=> (
-                <ListItem key={i.idIngrediente}><ListItemText primary={i.nombre} /></ListItem>
+            <Box component="ul" sx={{ pl: 2, mt: 1, mb: 2 }}>
+              {(selectedReceta?.ingredientes || []).map(i => (
+                <Box component="li" key={i.idIngrediente} sx={{ listStyleType: 'disc', ml: 1, fontSize: '0.95rem' }}>{i.nombre}</Box>
               ))}
-            </List>
+            </Box>
             <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Preparación</Typography>
             <Typography sx={{ whiteSpace: 'pre-wrap' }}>{selectedReceta?.preparacion}</Typography>
             <Divider sx={{ my: 2 }} />

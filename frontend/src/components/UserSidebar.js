@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -16,6 +17,7 @@ export default function UserSidebar({ open, onClose, onLogout }){
   // read user from localStorage
   let user = null;
   try{ user = JSON.parse(localStorage.getItem('user') || 'null'); }catch(e){ user = null; }
+  const navigate = useNavigate();
 
   const displayName = user && (user.nombre || user.name || user.firstName) ? `${user.nombre || user.name || ''} ${user.apellido || user.lastName || ''}`.trim() : (user && user.username ? user.username : 'Usuario');
   const email = user && (user.email || user.usuario || user.mail) ? (user.email || user.usuario || user.mail) : '';
@@ -33,13 +35,13 @@ export default function UserSidebar({ open, onClose, onLogout }){
 
         <List>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton onClick={() => { onClose && onClose(); navigate('/mi/favoritos'); }}>
               <ListItemIcon><BookmarkIcon /></ListItemIcon>
               <ListItemText primary="Favoritos" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton onClick={() => { onClose && onClose(); navigate('/mi/recetas'); }}>
               <ListItemIcon><MenuBookIcon /></ListItemIcon>
               <ListItemText primary="Recetas" />
             </ListItemButton>
