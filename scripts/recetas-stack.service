@@ -1,0 +1,32 @@
+## Deprecated placeholder
+# Este archivo existía como duplicado. La unidad systemd canonical se encuentra en:
+#   scripts/systemd/recetas-stack.service
+# Por seguridad hemos preservado el antiguo contenido en:
+#   scripts/recetas-stack.service.bak
+# Favor usar y copiar la unidad desde scripts/systemd/recetas-stack.service
+[Unit]
+Description=Recetas Docker Compose stack
+After=docker.service docker.socket network-online.target
+Requires=docker.service docker.socket
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/admin/api-recetas
+Environment=APP_DIR=/home/admin/api-recetas
+Environment=ENV_FILE=/home/admin/api-recetas/.env
+Environment=LOG_FILE=/var/log/recetas-stack.log
+# Si deseas ejecutar como usuario no root (asegúrate que pertenezca al grupo docker)
+# User=admin
+# Group=docker
+ExecStart=/bin/bash /home/admin/api-recetas/scripts/start_stack.sh
+ExecStop=/bin/bash /home/admin/api-recetas/scripts/stop_stack.sh
+TimeoutStartSec=0
+StandardOutput=append:/var/log/recetas-stack.log
+StandardError=append:/var/log/recetas-stack.log
+TimeoutStopSec=120
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
