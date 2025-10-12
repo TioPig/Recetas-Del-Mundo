@@ -1,0 +1,21 @@
+# Sensibles
+.env
+**/*.env
+pgadmin/servers.json
+
+# Java / Maven
+Springboot/target/
+
+# Logs
+**/*.log
+Springboot/app_out.log
+Springboot/app_err.log
+Springboot/app-shutdown-threads.log
+
+# IDE/OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+backups/
