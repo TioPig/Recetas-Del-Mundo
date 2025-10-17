@@ -7,7 +7,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import { postUsuario } from '../api';
+import { register } from '../api';
 
 export default function Register(){
   const [username, setUsername] = useState('');
@@ -24,8 +24,9 @@ export default function Register(){
     if(password !== password2){ setError('Las contraseñas no coinciden'); return; }
     setLoading(true);
     try{
+      // Use /auth/register endpoint as documented in endpoints.md
       const payload = { username, email, password };
-      await postUsuario(payload);
+      await register(payload);
       setLoading(false);
       navigate('/login');
     }catch(e){

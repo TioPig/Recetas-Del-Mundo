@@ -11,7 +11,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { loginUsuario, login } from '../api';
+import { login } from '../api';
 import Link from '@mui/material/Link';
 
 export default function Login(){
@@ -27,10 +27,8 @@ export default function Login(){
   if(!email || !password){ setError('Completa email y contraseña'); return; }
     setLoading(true);
     try{
-      // try /api/usuarios/login first then fallback to /api/login
-      let res = null;
-  try{ res = await loginUsuario({ email, password }); }catch(e){ /* fallback below */ }
-  if(!res){ res = await login({ email, password }); }
+      // Use /auth/login endpoint as documented in endpoints.md
+      const res = await login({ email, password });
 
       const data = res && res.data ? res.data : res;
       // attempt to extract token and user from common shapes

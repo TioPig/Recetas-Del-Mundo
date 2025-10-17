@@ -13,6 +13,7 @@ import RecetasByPais from './components/RecetasByPais';
 import SearchResults from './components/SearchResults';
 import UserFavoritos from './components/UserFavoritos';
 import UserRecetas from './components/UserRecetas';
+import DebugLikes from './components/DebugLikes';
 import Footer from './components/Footer';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/buscar" element={<SearchResults />} />
             <Route path="/mi/favoritos" element={<UserFavoritos />} />
             <Route path="/mi/recetas" element={<UserRecetas />} />
+            <Route path="/debug/likes" element={<DebugLikes />} />
           </Routes>
         </Box>
         <Footer />

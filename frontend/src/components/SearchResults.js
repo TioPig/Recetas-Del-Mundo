@@ -19,10 +19,14 @@ import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import { searchRecetasByNombre, postLikeReceta, postStarReceta, postFavoritoReceta, getComentariosReceta, postComentarioReceta, isAuthenticated } from '../api';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import { searchRecetasByNombre, postLikeReceta, deleteLikeReceta, postStarReceta, postFavoritoReceta, deleteFavoritoReceta, getComentariosReceta, postComentarioReceta, isAuthenticated, getMeGustaCount, getEstrellaStats, getMeGustas, getEstrellas, getFavoritos } from '../api';
 import AuthPromptDialog from './AuthPromptDialog';
+import RatingDialog from './RatingDialog';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -70,6 +74,61 @@ export default function SearchResults(){
   const [comentarios, setComentarios] = useState([]);
   const [newComentario, setNewComentario] = useState('');
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [userInteractions, setUserInteractions] = useState({ likes: new Set(), favoritos: new Set(), estrellas: new Map() });
+  const [modalStats, setModalStats] = useState({ likesCount: 0, avgStars: 0, totalStars: 0 });
+
+  // Cargar interacciones del usuario al montar
+  useEffect(() => {
+    if(isAuthenticated()) {
+      // Obtener ID del usuario actual
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const currentUserId = user.id_usr || user.idUsr || user.id;
+
+      Promise.all([
+        getFavoritos().catch(() => ({ data: [] })),
+        getMeGustas().catch(() => ({ data: [] })),
+        getEstrellas().catch(() => ({ data: [] }))
+      ]).then(([favoritosRes, likesRes, estrellasRes]) => {
+        const favoritosData = Array.isArray(favoritosRes?.data) ? favoritosRes.data : [];
+        const likesData = Array.isArray(likesRes?.data) ? likesRes.data : [];
+        const estrellasData = Array.isArray(estrellasRes?.data) ? estrellasRes.data : [];
+
+        const newLikes = new Set();
+        const newFavoritos = new Set();
+        const newEstrellas = new Map();
+
+        favoritosData.forEach(fav => {
+          // Filtrar solo favoritos del usuario actual
+          const userId = fav.usuario?.idUsr || fav.usuario?.id || fav.idUsuario || fav.idUsr;
+          if(currentUserId && userId && userId === currentUserId) {
+            const recetaId = fav.idReceta || fav.id_receta || fav.receta?.idReceta || fav.receta?.id;
+            if(recetaId) newFavoritos.add(recetaId);
+          }
+        });
+
+        likesData.forEach(like => {
+          // Filtrar solo likes del usuario actual
+          const userId = like.usuario?.idUsr || like.usuario?.id || like.idUsuario || like.idUsr;
+          if(currentUserId && userId && userId === currentUserId) {
+            const recetaId = like.idReceta || like.id_receta || like.receta?.idReceta || like.receta?.id;
+            if(recetaId) newLikes.add(recetaId);
+          }
+        });
+
+        estrellasData.forEach(estrella => {
+          // Filtrar solo estrellas del usuario actual
+          const userId = estrella.usuario?.idUsr || estrella.usuario?.id || estrella.idUsuario || estrella.idUsr;
+          if(currentUserId && userId && userId === currentUserId) {
+            const recetaId = estrella.idReceta || estrella.id_receta || estrella.receta?.idReceta || estrella.receta?.id;
+            const valor = estrella.estrellas || estrella.valorEstrellas || estrella.valor || 0;
+            if(recetaId) newEstrellas.set(recetaId, valor);
+          }
+        });
+
+        setUserInteractions({ likes: newLikes, favoritos: newFavoritos, estrellas: newEstrellas });
+      });
+    }
+  }, []);
 
   const loadComentarios = async (recetaId) => {
     if(!recetaId) return setComentarios([]);
@@ -81,8 +140,104 @@ export default function SearchResults(){
     }catch(e){ setComentarios([]); }
   };
 
-  const handleOpenReceta = (receta) => { setSelectedReceta(receta); loadComentarios(receta?.idReceta || receta?.id); setOpenReceta(true); };
-  const handleCloseReceta = () => { setOpenReceta(false); setSelectedReceta(null); };
+  const loadModalStats = async (recetaId) => {
+    if(!recetaId) return;
+    try {
+      const [likesRes, starsRes] = await Promise.all([
+        getMeGustaCount(recetaId).catch(() => ({ data: { count: 0 } })),
+        getEstrellaStats(recetaId).catch(() => ({ data: { promedio: 0, total: 0 } }))
+      ]);
+      
+      const likesData = likesRes?.data || likesRes;
+      const starsData = starsRes?.data || starsRes;
+      
+      setModalStats({
+        likesCount: likesData?.count || likesData?.total || 0,
+        avgStars: starsData?.promedio || starsData?.average || starsData?.avg || 0,
+        totalStars: starsData?.total || starsData?.count || 0
+      });
+    } catch(e) {
+      // Error silencioso
+    }
+  };
+
+  const handleLike = async (recetaId) => {
+    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
+    try{
+      const isLiked = userInteractions.likes.has(recetaId);
+      if(isLiked){
+        await deleteLikeReceta(recetaId);
+        setUserInteractions(prev => {
+          const newLikes = new Set(prev.likes);
+          newLikes.delete(recetaId);
+          return { ...prev, likes: newLikes };
+        });
+      }else{
+        await postLikeReceta(recetaId);
+        setUserInteractions(prev => {
+          const newLikes = new Set(prev.likes);
+          newLikes.add(recetaId);
+          return { ...prev, likes: newLikes };
+        });
+      }
+      if(openReceta && (selectedReceta?.idReceta === recetaId || selectedReceta?.id === recetaId)) {
+        loadModalStats(recetaId);
+      }
+    }catch(e){}
+  };
+
+  const handleFavorito = async (recetaId) => {
+    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
+    try{
+      const isFavorito = userInteractions.favoritos.has(recetaId);
+      if(isFavorito){
+        await deleteFavoritoReceta(recetaId);
+        setUserInteractions(prev => {
+          const newFavoritos = new Set(prev.favoritos);
+          newFavoritos.delete(recetaId);
+          return { ...prev, favoritos: newFavoritos };
+        });
+      }else{
+        await postFavoritoReceta(recetaId);
+        setUserInteractions(prev => {
+          const newFavoritos = new Set(prev.favoritos);
+          newFavoritos.add(recetaId);
+          return { ...prev, favoritos: newFavoritos };
+        });
+      }
+    }catch(e){}
+  };
+
+  const handleStar = async (recetaId) => {
+    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
+    try{
+      await postStarReceta(recetaId);
+      setUserInteractions(prev => {
+        const newEstrellas = new Map(prev.estrellas);
+        newEstrellas.set(recetaId, 5);
+        return { ...prev, estrellas: newEstrellas };
+      });
+      if(openReceta && (selectedReceta?.idReceta === recetaId || selectedReceta?.id === recetaId)) {
+        loadModalStats(recetaId);
+      }
+    }catch(e){}
+  };
+
+  const handleOpenReceta = async (receta) => { 
+    setSelectedReceta(receta); 
+    const recetaId = receta?.idReceta || receta?.id;
+    Promise.all([
+      loadComentarios(recetaId),
+      loadModalStats(recetaId)
+    ]);
+    setOpenReceta(true); 
+  };
+  
+  const handleCloseReceta = () => { 
+    setOpenReceta(false); 
+    setSelectedReceta(null); 
+    setModalStats({ likesCount: 0, avgStars: 0, totalStars: 0 });
+  };
 
   return (
     <Box>
@@ -114,9 +269,15 @@ export default function SearchResults(){
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="caption" color="text.secondary">{r.fechaCreacion}</Typography>
                   <Box>
-                    <IconButton size="small" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postLikeReceta(r.idReceta || r.id); }catch(e){} }} aria-label="like"><ThumbUpIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postStarReceta(r.idReceta || r.id); }catch(e){} }} aria-label="star"><StarIcon fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postFavoritoReceta(r.idReceta || r.id); }catch(e){} }} aria-label="fav"><BookmarkIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => handleLike(r.idReceta || r.id)} aria-label="like">
+                      {userInteractions.likes.has(r.idReceta || r.id) ? <ThumbUpIcon fontSize="small" color="primary" /> : <ThumbUpOutlinedIcon fontSize="small" />}
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleStar(r.idReceta || r.id)} aria-label="star">
+                      {userInteractions.estrellas.has(r.idReceta || r.id) ? <StarIcon fontSize="small" color="warning" /> : <StarBorderIcon fontSize="small" />}
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleFavorito(r.idReceta || r.id)} aria-label="fav">
+                      {userInteractions.favoritos.has(r.idReceta || r.id) ? <BookmarkIcon fontSize="small" color="error" /> : <BookmarkBorderIcon fontSize="small" />}
+                    </IconButton>
                     <Button onClick={() => handleOpenReceta(r)} size="small">Ver receta</Button>
                   </Box>
                 </Box>
@@ -144,16 +305,38 @@ export default function SearchResults(){
             <Typography sx={{ mt: 2, fontWeight: 700 }}>Preparación</Typography>
             <Typography sx={{ whiteSpace: 'pre-wrap' }}>{selectedReceta?.preparacion}</Typography>
             <Divider sx={{ my: 2 }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton aria-label="like" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postLikeReceta(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}><ThumbUpIcon /></IconButton>
-              <IconButton aria-label="star" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postStarReceta(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}><StarIcon /></IconButton>
-              <IconButton aria-label="fav" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } try{ await postFavoritoReceta(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}><BookmarkIcon /></IconButton>
-              <Box sx={{ ml: 2, color: 'text.secondary' }}>
-                <span>{selectedReceta?.likes || selectedReceta?.likesCount || 0} Me gusta</span>
-                <span style={{ marginLeft: 12 }}>{selectedReceta?.stars || selectedReceta?.starsCount || 0} Estrellas</span>
+            
+            {/* Botones de interacción con estadísticas */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+              {/* Botones e interacciones de izquierda */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Botón Me Gusta con contador */}
+                <IconButton aria-label="like" onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}>
+                  {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon color="primary" /> : <ThumbUpOutlinedIcon />}
+                </IconButton>
+                <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>
+                  {modalStats.likesCount}
+                </Typography>
+                
+                {/* Botón Estrellas con promedio */}
+                <IconButton aria-label="star" onClick={() => handleStar(selectedReceta?.idReceta || selectedReceta?.id)}>
+                  {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon color="warning" /> : <StarBorderIcon />}
+                </IconButton>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {modalStats.avgStars > 0 ? modalStats.avgStars.toFixed(1) : '0.0'}
+                  <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontWeight: 400 }}>
+                    ({modalStats.totalStars})
+                  </Typography>
+                </Typography>
               </Box>
+              
+              {/* Botón Favorito a la derecha */}
+              <IconButton aria-label="fav" onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}>
+                {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon color="error" /> : <BookmarkBorderIcon />}
+              </IconButton>
             </Box>
-            <Typography sx={{ fontWeight: 700 }}>Comentarios</Typography>
+            
+            <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
             <List>
               {(comentarios || []).map(c => (
                 <ListItem key={c.idComentario || c.id}><ListItemText primary={c.autor || c.nombre || 'Anon'} secondary={c.texto || c.comentario} /></ListItem>
