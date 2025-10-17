@@ -1,0 +1,36 @@
+/* Copied and trimmed from OldFont/css/style.css */
+/* backgrounds */
+.bg-naranjo { background-color: #F75442; }
+.bg-naranjo-op { background-color: #F75442; opacity: 0.9; }
+.bg-crema { background-color: #F9E9AE; }
+.bg-cafe { background-color: #99682E; }
+.tx-nolinea { text-decoration: none; }
+
+/* typography */
+.titulo-receta { font-weight: 500; }
+.titulo-mundo { font-weight: 500; margin-top: -1.6rem; font-size: 1.7rem; }
+.receta-random{ font-weight: 500; margin-top: -1.6rem; font-size: 3.5rem; }
+.links { font-size: 1.3rem; text-align: center; }
+.hero{ min-height: 200px; }
+
+.index-img{ max-width: 150px; max-height: 150px; }
+.row-no-margin { margin-left: 0px; margin-right: 0px; }
+.hr { size: 20px; height: 10px; opacity: 1; background-color: #F9E9AE; border-top: 0; }
+
+/* responsive helpers */
+@media only screen and (min-width: 768px){
+  .index-img{ width:150px; height:150px; }
+}
+
+/* small utilities */
+.texto-grande { font-size: 18vw; }
+@media only screen and (min-width: 768px){ .texto-grande{ font-size:80px; } }
+.texto-mediano { font-size: 15vw; }
+@media only screen and (min-width: 768px){ .texto-mediano{ font-size:50px; } }
+
+/* form image */
+.formulario-img { display:none; }
+@media only screen and (min-width: 768px){ .formulario-img{ display:block; } }
+
+/* basic reset for App */
+body { font-family: 'Lato', 'Roboto', sans-serif; }
