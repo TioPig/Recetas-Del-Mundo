@@ -1,0 +1,443 @@
+========================================================================
+  DOCUMENTACIÓN DE PETICIONES HTTP - RECETAS DEL MUNDO
+========================================================================
+  Fecha: 18 de Octubre, 2025
+  Backend: http://168.181.187.137:8081
+========================================================================
+
+Este documento detalla cómo se envían las peticiones HTTP para:
+1. BORRAR LIKES (Me Gusta)
+2. CREAR COMENTARIOS
+
+========================================================================
+1. BORRAR LIKES (DELETE Like/Me Gusta de una Receta)
+========================================================================
+
+ENDPOINT:
+---------
+DELETE /recetas/megusta
+
+MÉTODO HTTP:
+------------
+DELETE
+
+URL COMPLETA:
+-------------
+http://168.181.187.137:8081/recetas/megusta?idUsuario={userId}&idReceta={recetaId}
+
+PARÁMETROS QUERY STRING:
+-------------------------
+- idUsuario: ID del usuario autenticado (obligatorio)
+- idReceta: ID de la receta a la que se le quita el like (obligatorio)
+
+HEADERS:
+--------
+Authorization: Bearer {token}
+Content-Type: application/json
+Accept: application/json
+
+BODY:
+-----
+null (no se envía body en DELETE)
+
+EJEMPLO DE PETICIÓN:
+--------------------
+DELETE http://168.181.187.137:8081/recetas/megusta?idUsuario=123&idReceta=1
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  Content-Type: application/json
+  Accept: application/json
+
+CÓDIGO FRONTEND (api.js):
+--------------------------
+export const deleteLikeReceta = (recetaId) => {
+  const token = localStorage.getItem('authToken');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user.id_usr || user.idUsr || user.id;
+  
+  return api.delete(`/recetas/megusta?idUsuario=${userId}&idReceta=${recetaId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+FLUJO DE DATOS:
+---------------
+1. Usuario hace clic en el botón de "like" (cuando ya está activo)
+2. Frontend obtiene:
+   - Token JWT de localStorage.getItem('authToken')
+   - userId del objeto user en localStorage
+   - recetaId de la receta actual
+3. Se construye la URL con query parameters
+4. Se envía DELETE con header Authorization
+5. Backend elimina el registro de la tabla "me_gusta" donde:
+   - id_usuario = {userId} AND id_receta = {recetaId}
+
+RESPUESTA ESPERADA DEL BACKEND:
+--------------------------------
+Status: 200 OK
+Body (formato envuelto):
+{
+  "data": null,
+  "exito": true,
+  "mensaje": "Me gusta eliminado correctamente"
+}
+
+O simplemente:
+{
+  "exito": true,
+  "mensaje": "Me gusta eliminado correctamente"
+}
+
+MANEJO DE ERRORES:
+------------------
+- 401 Unauthorized: Token inválido o expirado
+- 404 Not Found: Like no existe
+- 500 Internal Server Error: Error en el servidor
+
+CÓDIGO DE USO EN COMPONENTE:
+-----------------------------
+const handleLike = async (recetaId) => {
+  if(!isAuthenticated()){ 
+    setAuthPromptOpen(true); 
+    return; 
+  }
+  
+  try {
+    const isLiked = userInteractions.likes.has(recetaId);
+    
+    if(isLiked) {
+      // BORRAR LIKE
+      await deleteLikeReceta(recetaId);
+      
+      // Actualizar estado local
+      setUserInteractions(prev => {
+        const newLikes = new Set(prev.likes);
+        newLikes.delete(recetaId);
+        return { ...prev, likes: newLikes };
+      });
+      
+      // Recargar estadísticas
+      loadRecetaStats(recetaId);
+    } else {
+      // AGREGAR LIKE
+      await postLikeReceta(recetaId);
+      
+      setUserInteractions(prev => {
+        const newLikes = new Set(prev.likes);
+        newLikes.add(recetaId);
+        return { ...prev, likes: newLikes };
+      });
+      
+      loadRecetaStats(recetaId);
+    }
+  } catch(err) {
+    console.error('Error al manejar like:', err);
+  }
+};
+
+
+========================================================================
+2. CREAR COMENTARIOS (POST Comentario en una Receta)
+========================================================================
+
+ENDPOINT:
+---------
+POST /recetas/comentarios
+
+MÉTODO HTTP:
+------------
+POST
+
+URL COMPLETA:
+-------------
+http://168.181.187.137:8081/recetas/comentarios?idUsuario={userId}&idReceta={recetaId}&texto={textoComentario}&fechaCreacion={fechaISO}
+
+PARÁMETROS QUERY STRING:
+-------------------------
+- idUsuario: ID del usuario que comenta (obligatorio)
+- idReceta: ID de la receta comentada (obligatorio)
+- texto: Contenido del comentario (obligatorio, URL encoded)
+- fechaCreacion: Fecha en formato ISO 8601 (obligatorio, URL encoded)
+
+HEADERS:
+--------
+Authorization: Bearer {token}
+Content-Type: application/json
+Accept: application/json
+
+BODY:
+-----
+null (todos los datos van en query parameters)
+
+EJEMPLO DE PETICIÓN:
+--------------------
+POST http://168.181.187.137:8081/recetas/comentarios?idUsuario=123&idReceta=1&texto=Excelente%20receta!&fechaCreacion=2025-10-18T14:30:00.000Z
+Headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  Content-Type: application/json
+  Accept: application/json
+Body: null
+
+CÓDIGO FRONTEND (api.js):
+--------------------------
+export const postComentarioReceta = (recetaId, textoComentario) => {
+  const token = localStorage.getItem('authToken');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user.id_usr || user.idUsr || user.id;
+  const fechaCreacion = new Date().toISOString(); // ISO format: 2025-10-18T14:30:00.000Z
+  
+  return api.post(
+    `/recetas/comentarios?idUsuario=${userId}&idReceta=${recetaId}&texto=${encodeURIComponent(textoComentario)}&fechaCreacion=${encodeURIComponent(fechaCreacion)}`, 
+    null, 
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+};
+
+FLUJO DE DATOS:
+---------------
+1. Usuario escribe comentario en TextField
+2. Usuario hace clic en botón "Enviar"
+3. Frontend valida:
+   - Usuario autenticado (token existe)
+   - Comentario no vacío (trim())
+4. Frontend prepara datos:
+   - Token JWT de localStorage
+   - userId del objeto user
+   - recetaId de la receta actual
+   - textoComentario del estado
+   - fechaCreacion generada con new Date().toISOString()
+5. Se codifican los valores con encodeURIComponent():
+   - texto: "Excelente receta!" → "Excelente%20receta!"
+   - fechaCreacion: "2025-10-18T14:30:00.000Z" → "2025-10-18T14%3A30%3A00.000Z"
+6. Se envía POST con todos los datos en query string
+7. Backend crea registro en tabla "comentarios"
+
+FORMATO DE FECHA:
+-----------------
+ISO 8601: YYYY-MM-DDTHH:mm:ss.sssZ
+Ejemplo: 2025-10-18T14:30:45.123Z
+- YYYY: Año (4 dígitos)
+- MM: Mes (01-12)
+- DD: Día (01-31)
+- T: Separador (literal)
+- HH: Hora (00-23)
+- mm: Minutos (00-59)
+- ss: Segundos (00-59)
+- sss: Milisegundos (000-999)
+- Z: UTC timezone
+
+RESPUESTA ESPERADA DEL BACKEND:
+--------------------------------
+Status: 201 Created
+Body (formato envuelto):
+{
+  "data": {
+    "idComentario": 456,
+    "idUsuario": 123,
+    "idReceta": 1,
+    "texto": "Excelente receta!",
+    "fechaCreacion": "2025-10-18T14:30:00.000Z",
+    "autor": "Juan Pérez"
+  },
+  "exito": true,
+  "mensaje": "Comentario creado correctamente"
+}
+
+MANEJO DE ERRORES:
+------------------
+- 400 Bad Request: Parámetros faltantes o inválidos
+- 401 Unauthorized: Token inválido o expirado
+- 404 Not Found: Receta no existe
+- 500 Internal Server Error: Error en el servidor
+
+CÓDIGO DE USO EN COMPONENTE:
+-----------------------------
+const [newComentario, setNewComentario] = useState('');
+
+const handleEnviarComentario = async () => {
+  // Validar autenticación
+  if(!isAuthenticated()) { 
+    setAuthPromptOpen(true); 
+    return; 
+  }
+  
+  // Validar comentario no vacío
+  if(!newComentario || !newComentario.trim()) {
+    return;
+  }
+  
+  try {
+    const recetaId = selectedReceta?.idReceta || selectedReceta?.id;
+    
+    // CREAR COMENTARIO
+    await postComentarioReceta(recetaId, newComentario);
+    
+    // Limpiar campo
+    setNewComentario('');
+    
+    // Recargar lista de comentarios
+    await loadComentarios(recetaId);
+    
+  } catch(e) {
+    console.error('Error al crear comentario:', e);
+  }
+};
+
+// En el JSX:
+<Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+  <TextField 
+    size="small" 
+    fullWidth 
+    placeholder="Escribe un comentario..." 
+    value={newComentario} 
+    onChange={(e) => setNewComentario(e.target.value)} 
+  />
+  <Button 
+    size="small" 
+    variant="contained" 
+    onClick={handleEnviarComentario}
+  >
+    Enviar
+  </Button>
+</Box>
+
+
+========================================================================
+3. CONFIGURACIÓN AXIOS
+========================================================================
+
+INSTANCIA AXIOS:
+----------------
+const api = axios.create({
+  baseURL: 'http://168.181.187.137:8081',  // En producción
+  baseURL: '',                              // En desarrollo (usa proxy)
+  timeout: 10000,
+  withCredentials: false,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+});
+
+INTERCEPTOR DE REQUEST:
+-----------------------
+- Adjunta automáticamente el header Authorization
+- Solo en métodos POST, PUT, DELETE, PATCH
+- No en métodos GET (por diseño del backend)
+- Formato: "Bearer {token}"
+
+INTERCEPTOR DE RESPONSE:
+------------------------
+- Desenvuelve respuestas del formato: { data: {...}, exito: true, mensaje: "..." }
+- Extrae solo el campo "data" para simplificar el código
+- Maneja errores 401 (token expirado) redirigiendo a /login
+
+
+========================================================================
+4. ALMACENAMIENTO LOCAL (localStorage)
+========================================================================
+
+DATOS GUARDADOS:
+----------------
+1. authToken: Token JWT del usuario autenticado
+   Formato: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   
+2. user: Objeto JSON con información del usuario
+   Formato: 
+   {
+     "id_usr": 123,
+     "idUsr": 123,
+     "id": 123,
+     "nombre": "Juan Pérez",
+     "email": "juan@example.com"
+   }
+
+ACCESO A DATOS:
+---------------
+// Token
+const token = localStorage.getItem('authToken');
+
+// Usuario
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+const userId = user.id_usr || user.idUsr || user.id;
+
+
+========================================================================
+5. NOTAS IMPORTANTES
+========================================================================
+
+1. ENCODING DE URL:
+   - Siempre usar encodeURIComponent() para texto y fechas
+   - Previene errores con caracteres especiales: espacios, acentos, símbolos
+
+2. TOKEN JWT:
+   - Se envía en TODAS las peticiones POST/DELETE
+   - Formato: "Bearer {token}"
+   - Si expira, backend retorna 401 y frontend redirige a /login
+
+3. PARÁMETROS QUERY VS BODY:
+   - Backend actual usa QUERY PARAMETERS (no body JSON)
+   - Todos los datos van en la URL después del "?"
+   - El body va como "null" en las peticiones
+
+4. FILTRADO POR USUARIO:
+   - Backend debería filtrar por usuario del token JWT
+   - Actualmente requiere enviar idUsuario explícitamente
+   - Workaround temporal: frontend envía idUsuario en query params
+
+5. FECHAS:
+   - Formato ISO 8601 (estándar internacional)
+   - Generada con: new Date().toISOString()
+   - Incluye timezone UTC (Z al final)
+
+6. MANEJO DE ERRORES:
+   - Frontend usa try-catch para capturar errores
+   - Errores se manejan "silenciosamente" (no alert/toast)
+   - Console.error para debugging
+
+========================================================================
+FIN DE LA DOCUMENTACIÓN
+========================================================================
+
+Request URL
+http://localhost:3000/recetas/comentarios?idUsuario=1&idReceta=643&texto=%5Bobject%20Object%5D&fechaCreacion=2025-10-18T21%3A10%3A20.478Z
+Request Method
+POST
+Status Code
+200 OK
+
+{
+    "exito": false,
+    "mensaje": "Error al agregar comentario: could not execute statement [ERROR: null value in column \"fecha_creacion\" of relation \"comentario\" violates not-null constraint\n  Detail: Failing row contains (1473, null, 643, [object Object], 1).] [insert into comentario (fecha_creacion,id_receta,texto,id_usr) values (?,?,?,?)]; SQL [insert into comentario (fecha_creacion,id_receta,texto,id_usr) values (?,?,?,?)]; constraint [fecha_creacion\" of relation \"comentario]"
+}
+Query String parameters
+
+idUsuario
+1
+idReceta
+643
+texto
+%5Bobject%20Object%5D
+fechaCreacion
+2025-10-18T21%3A10%3A20.478Z
+
+
+
+
+
+Request URL
+http://localhost:3000/recetas/megusta?idUsuario=1&idReceta=31
+Request Method
+DELETE
+Status Code
+200 OK
+
+Query String parameters
+idUsuario
+1
+idReceta
+31
+
+{"exito":true,"mensaje":"Me gusta removido"}
