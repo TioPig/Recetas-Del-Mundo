@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { getMeGustas } from '../api';
+import { getMeGustas, formatFecha } from '../api';
 
 export default function DebugLikes() {
   const [allLikes, setAllLikes] = useState([]);
@@ -92,7 +92,7 @@ export default function DebugLikes() {
                       <TableCell>{userName}</TableCell>
                       <TableCell>{userEmail}</TableCell>
                       <TableCell>{recetaId}</TableCell>
-                      <TableCell>{like.fechaCreacion || 'N/A'}</TableCell>
+                      <TableCell>{formatFecha(like.fechaCreacion) || 'N/A'}</TableCell>
                     </TableRow>
                   );
                 })}

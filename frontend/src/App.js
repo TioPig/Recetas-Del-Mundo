@@ -13,7 +13,10 @@ import RecetasByPais from './components/RecetasByPais';
 import SearchResults from './components/SearchResults';
 import UserFavoritos from './components/UserFavoritos';
 import UserRecetas from './components/UserRecetas';
+import NuevaReceta from './components/NuevaReceta';
+import Ajustes from './components/Ajustes';
 import DebugLikes from './components/DebugLikes';
+import AdminPanel from './components/AdminPanel';
 import Footer from './components/Footer';
 
 function App() {
@@ -26,6 +29,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/registro" element={<Register />} />
             <Route path="/paises" element={<Paises />} />
             <Route path="/paises/:id" element={<RecetasByPais />} />
             <Route path="/categorias" element={<Categorias />} />
@@ -33,6 +37,10 @@ function App() {
             <Route path="/buscar" element={<SearchResults />} />
             <Route path="/mi/favoritos" element={<UserFavoritos />} />
             <Route path="/mi/recetas" element={<UserRecetas />} />
+            <Route path="/mis-recetas" element={<UserRecetas />} />
+            <Route path="/nueva-receta" element={<NuevaReceta />} />
+            <Route path="/ajustes" element={<Ajustes />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route path="/debug/likes" element={<DebugLikes />} />
           </Routes>
         </Box>

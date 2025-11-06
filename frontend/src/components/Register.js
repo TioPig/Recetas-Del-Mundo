@@ -10,7 +10,8 @@ import Grid from '@mui/material/Grid';
 import { register } from '../api';
 
 export default function Register(){
-  const [username, setUsername] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
@@ -20,18 +21,36 @@ export default function Register(){
 
   const handleRegister = async () => {
     setError(null);
-    if(!username || !email || !password){ setError('Completa los campos requeridos'); return; }
-    if(password !== password2){ setError('Las contraseñas no coinciden'); return; }
+    if(!nombre || !apellido || !email || !password){ 
+      setError('Completa todos los campos requeridos'); 
+      return; 
+    }
+    if(password !== password2){ 
+      setError('Las contraseñas no coinciden'); 
+      return; 
+    }
     setLoading(true);
     try{
-      // Use /auth/register endpoint as documented in endpoints.md
-      const payload = { username, email, password };
-      await register(payload);
+      // Enviar en el formato que espera el backend
+      const payload = { 
+        nombre, 
+        apellido, 
+        email, 
+        password 
+      };
+      const response = await register(payload);
       setLoading(false);
-      navigate('/login');
+      
+      // Verificar si el registro fue exitoso
+      if (response.data && response.data.exito) {
+        navigate('/login');
+      } else {
+        setError(response.data?.mensaje || 'Error al crear la cuenta');
+      }
     }catch(e){
       setLoading(false);
-      setError('Error al crear la cuenta. Intenta de nuevo.');
+      const errorMsg = e.response?.data?.mensaje || 'Error al crear la cuenta. Intenta de nuevo.';
+      setError(errorMsg);
     }
   };
 
@@ -45,13 +64,54 @@ export default function Register(){
         <Grid container justifyContent="center">
           <Grid item xs={12} md={6}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField label="Usuario" value={username} onChange={(e)=> setUsername(e.target.value)} fullWidth />
-              <TextField label="Email" value={email} onChange={(e)=> setEmail(e.target.value)} type="email" fullWidth />
-              <TextField label="Contraseña" value={password} onChange={(e)=> setPassword(e.target.value)} type="password" fullWidth />
-              <TextField label="Confirmar Contraseña" value={password2} onChange={(e)=> setPassword2(e.target.value)} type="password" fullWidth />
+              <TextField 
+                label="Nombre" 
+                value={nombre} 
+                onChange={(e)=> setNombre(e.target.value)} 
+                fullWidth 
+                required
+              />
+              <TextField 
+                label="Apellido" 
+                value={apellido} 
+                onChange={(e)=> setApellido(e.target.value)} 
+                fullWidth 
+                required
+              />
+              <TextField 
+                label="Email" 
+                value={email} 
+                onChange={(e)=> setEmail(e.target.value)} 
+                type="email" 
+                fullWidth 
+                required
+              />
+              <TextField 
+                label="Contraseña" 
+                value={password} 
+                onChange={(e)=> setPassword(e.target.value)} 
+                type="password" 
+                fullWidth 
+                required
+              />
+              <TextField 
+                label="Confirmar Contraseña" 
+                value={password2} 
+                onChange={(e)=> setPassword2(e.target.value)} 
+                type="password" 
+                fullWidth 
+                required
+              />
               {error && <Typography color="error">{error}</Typography>}
               <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button variant="contained" sx={{ backgroundColor: '#F75442' }} onClick={handleRegister} disabled={loading}>{loading? 'Creando...' : 'Crear cuenta'}</Button>
+                <Button 
+                  variant="contained" 
+                  sx={{ backgroundColor: '#F75442', '&:hover': { backgroundColor: '#d64032' } }} 
+                  onClick={handleRegister} 
+                  disabled={loading}
+                >
+                  {loading? 'Creando...' : 'Crear cuenta'}
+                </Button>
                 <Button variant="outlined" onClick={()=> navigate('/login')}>Volver</Button>
               </Box>
             </Box>

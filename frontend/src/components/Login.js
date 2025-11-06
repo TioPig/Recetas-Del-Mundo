@@ -31,6 +31,14 @@ export default function Login(){
       const res = await login({ email, password });
 
       const data = res && res.data ? res.data : res;
+      
+      // Verificar si la respuesta indica fallo
+      if (data?.exito === false) {
+        setError(data?.mensaje || 'Credenciales inválidas');
+        setLoading(false);
+        return;
+      }
+      
       // attempt to extract token and user from common shapes
       const token = data?.token || data?.authToken || data?.accessToken || data?.tokenJWT || data?.token_jwt;
       const user = data?.user || data?.usuario || data?.usuarioLogueado || data;
@@ -46,7 +54,8 @@ export default function Login(){
   navigate('/');
     }catch(e){
       setLoading(false);
-      setError('Credenciales inválidas o error de conexión');
+      const errorMsg = e.response?.data?.mensaje || 'Credenciales inválidas o error de conexión';
+      setError(errorMsg);
     }
   };
 

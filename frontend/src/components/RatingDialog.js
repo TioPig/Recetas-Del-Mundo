@@ -10,8 +10,9 @@ import {
   Box
 } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-const RatingDialog = ({ open, onClose, onRate, recetaNombre }) => {
+const RatingDialog = ({ open, onClose, onRate, onDelete, recetaNombre, hasRating }) => {
   const [value, setValue] = useState(5);
 
   // Reset value to 5 when dialog closes or opens
@@ -23,6 +24,14 @@ const RatingDialog = ({ open, onClose, onRate, recetaNombre }) => {
 
   const handleSubmit = () => {
     onRate(value);
+    setValue(5);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete();
+    }
     setValue(5);
     onClose();
   };
@@ -44,7 +53,12 @@ const RatingDialog = ({ open, onClose, onRate, recetaNombre }) => {
             name="star-rating"
             value={value}
             onChange={(event, newValue) => {
-              setValue(newValue);
+              // Si el usuario intenta deseleccionar todas las estrellas, mantener en 1
+              if (newValue === null || newValue === 0) {
+                setValue(1);
+              } else {
+                setValue(newValue);
+              }
             }}
             precision={1}
             size="large"
@@ -55,13 +69,25 @@ const RatingDialog = ({ open, onClose, onRate, recetaNombre }) => {
           </Typography>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleCancel} color="inherit">
-          Cancelar
-        </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Calificar
-        </Button>
+      <DialogActions sx={{ justifyContent: hasRating ? 'space-between' : 'flex-end', px: 2, pb: 2 }}>
+        {hasRating && (
+          <Button 
+            onClick={handleDelete} 
+            color="error" 
+            startIcon={<DeleteIcon />}
+            variant="outlined"
+          >
+            Eliminar valoración
+          </Button>
+        )}
+        <Box>
+          <Button onClick={handleCancel} color="inherit" sx={{ mr: 1 }}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            Calificar
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );

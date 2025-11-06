@@ -11,6 +11,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 export default function UserSidebar({ open, onClose, onLogout }){
@@ -44,6 +45,12 @@ export default function UserSidebar({ open, onClose, onLogout }){
             <ListItemButton onClick={() => { onClose && onClose(); navigate('/mi/recetas'); }}>
               <ListItemIcon><MenuBookIcon /></ListItemIcon>
               <ListItemText primary="Recetas" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => { onClose && onClose(); navigate('/ajustes'); }}>
+              <ListItemIcon><SettingsIcon /></ListItemIcon>
+              <ListItemText primary="Ajustes" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
