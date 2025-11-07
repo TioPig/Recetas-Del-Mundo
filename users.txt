@@ -1,3 +1,0 @@
-docker tag recetasdelmundo:latest tiopig1324/recetas-frontend:latest
-
-docker pull tiopig1324/recetas-frontend:latest && docker stop recetas-frontend && docker rm recetas-frontend && docker run -d --name recetas-frontend -p 80:80 --restart unless-stopped tiopig1324/recetas-frontend:latest

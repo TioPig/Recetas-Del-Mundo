@@ -119,15 +119,18 @@ function AdminCategorias() {
         // Al editar, enviamos todos los campos
         response = await adminUpdateCategoria(selectedCategoria.idCat, formData);
       } else {
-        // Al crear, enviamos solo los campos necesarios
-        // Workaround: el backend de categorías necesita que NO enviemos ciertos campos
-        // para que los auto-genere (a diferencia de países que sí lo hace correctamente)
+        // Al crear, el backend de categorías tiene un bug que no auto-genera fechaCreacion e idUsr
+        // Workaround: enviamos valores por defecto desde el frontend
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = user.id_usr || user.idUsr || user.id || 1;
+        
         const newCategoria = {
           nombre: formData.nombre,
           urlImagen: formData.urlImagen,
-          estado: formData.estado
-          // NO enviamos: comentario, fechaCreacion, idUsr
-          // El backend debería auto-generarlos
+          estado: formData.estado,
+          comentario: '', // Enviar string vacío en lugar de null
+          fechaCreacion: new Date().toISOString(), // Generar fecha actual
+          idUsr: userId // Usar el ID del usuario logueado
         };
         console.log('Creando categoría con datos:', newCategoria);
         response = await adminCreateCategoria(newCategoria);
