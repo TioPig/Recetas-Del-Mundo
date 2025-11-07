@@ -73,9 +73,9 @@ export default function Header(){
     try {
       const response = await createDonationSession(5.00); // Monto por defecto $5
       
-      // Si hay URL de Stripe, abrir sesión de pago
+      // Si hay URL de Stripe, redirigir a la sesión de pago
       if (response.data && response.data.url) {
-        window.open(response.data.url, '_blank');
+        window.location.href = response.data.url; // Redirige en la misma ventana
       } 
       // Si no hay URL pero se creó la donación (modo sin Stripe configurado)
       else if (response.data && response.data.donacion) {

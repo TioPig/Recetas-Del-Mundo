@@ -250,7 +250,27 @@ export const createDonationSession = async (amount) => {
     throw new Error('Debes iniciar sesión para donar');
   }
   
-  return api.post('/donaciones/create-session', { amount }, {
+  // Obtener la URL base actual del frontend
+  const baseUrl = window.location.origin;
+  const successUrl = `${baseUrl}/donacion/success?session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${baseUrl}/donacion/canceled`;
+  
+  return api.post('/donaciones/create-session', { 
+    amount,
+    successUrl,
+    cancelUrl
+  }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const verifyDonation = async (sessionId) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Debes iniciar sesión');
+  }
+  
+  return api.get(`/donaciones/verify/${sessionId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
