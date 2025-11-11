@@ -40,7 +40,8 @@ import {
   adminDeleteReceta, 
   formatFecha,
   getComentariosReceta,
-  adminDeleteComentario
+  adminDeleteComentario,
+  getUserNombre
 } from '../api';
 
 function AdminRecetas() {
@@ -92,7 +93,38 @@ function AdminRecetas() {
     try {
       // Cargar comentarios
       const commentsRes = await getComentariosReceta(recetaId);
-      setComentarios(commentsRes.data || []);
+      const comentariosList = commentsRes.data || [];
+      
+      // Obtener nombres de usuarios para cada comentario
+      const comentariosConNombres = await Promise.all(
+        comentariosList.map(async (comentario) => {
+          // Intentar obtener el ID del usuario de diferentes campos posibles
+          const userId = comentario.usuario?.idUsr || comentario.idUsuario || comentario.idUsr || comentario.usuario_id || comentario.userId;
+          
+          if (!userId) {
+            return {
+              ...comentario,
+              nombreUsuario: 'Usuario'
+            };
+          }
+          
+          try {
+            const nombreResponse = await getUserNombre(userId);
+            return {
+              ...comentario,
+              nombreUsuario: nombreResponse?.data?.nombre || nombreResponse?.nombre || 'Usuario'
+            };
+          } catch (error) {
+            console.error('Error obteniendo nombre de usuario:', error);
+            return {
+              ...comentario,
+              nombreUsuario: 'Usuario'
+            };
+          }
+        })
+      );
+      
+      setComentarios(comentariosConNombres);
 
       // Cargar ingredientes de la receta misma
       const recetaData = recetas.find(r => r.idReceta === recetaId);
@@ -375,7 +407,7 @@ function AdminRecetas() {
                               primary={
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <Typography variant="subtitle2">
-                                    {com.usuario?.nombre || `Usuario #${com.idUsr}`}
+                                    {com.nombreUsuario || 'Usuario'}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
                                     {formatFecha(com.fechaCreacion)}

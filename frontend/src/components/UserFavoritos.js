@@ -48,7 +48,8 @@ import {
   getEstrellaStats,
   getPaises,
   getCategorias,
-  formatFecha
+  formatFecha,
+  getUserNombre
 } from '../api';
 import AuthPromptDialog from './AuthPromptDialog';
 import RatingDialog from './RatingDialog';
@@ -341,7 +342,37 @@ export default function UserFavoritos(){
       const r = await getComentariosReceta(recetaId);
       const data = r && r.data ? r.data : r;
       const list = Array.isArray(data) ? data : (Array.isArray(data?.comentarios) ? data.comentarios : (Array.isArray(data?.items) ? data.items : []));
-      setComentarios(list);
+      
+      // Obtener nombres de usuarios para cada comentario
+      const comentariosConNombres = await Promise.all(
+        list.map(async (comentario) => {
+          // Intentar obtener el ID del usuario de diferentes campos posibles
+          const userId = comentario.usuario?.idUsr || comentario.idUsuario || comentario.idUsr || comentario.usuario_id || comentario.userId;
+          
+          if (!userId) {
+            return {
+              ...comentario,
+              nombreUsuario: 'Usuario'
+            };
+          }
+          
+          try {
+            const nombreResponse = await getUserNombre(userId);
+            return {
+              ...comentario,
+              nombreUsuario: nombreResponse?.data?.nombre || nombreResponse?.nombre || 'Usuario'
+            };
+          } catch (error) {
+            console.error('Error obteniendo nombre de usuario:', error);
+            return {
+              ...comentario,
+              nombreUsuario: 'Usuario'
+            };
+          }
+        })
+      );
+      
+      setComentarios(comentariosConNombres);
     }catch(e){ 
       setComentarios([]); 
     }
@@ -659,7 +690,7 @@ export default function UserFavoritos(){
           <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
           <List>
             {(comentarios || []).map(c => (
-              <ListItem key={c.idComentario || c.id}><ListItemText primary={c.autor || c.usuario?.nombre || c.usuario?.email || c.nombre || 'Anónimo'} secondary={c.texto || c.comentario} /></ListItem>
+              <ListItem key={c.idComentario || c.id}><ListItemText primary={c.nombreUsuario || 'Usuario'} secondary={c.texto || c.comentario} /></ListItem>
             ))}
           </List>
           <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>

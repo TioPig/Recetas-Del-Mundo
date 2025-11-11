@@ -46,7 +46,8 @@ import {
   getFavoritos,
   isAuthenticated,
   getComentariosReceta,
-  postComentarioReceta
+  postComentarioReceta,
+  getUserNombre
 } from '../api';
 import { Link as RouterLink } from 'react-router-dom';export default function Home(){
   const navigate = useNavigate();
@@ -272,7 +273,37 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
       const response = await getComentariosReceta(recetaId);
       const data = response && response.data ? response.data : response;
       const comentariosList = Array.isArray(data) ? data : (Array.isArray(data?.comentarios) ? data.comentarios : []);
-      setComentarios(comentariosList);
+      
+      // Obtener nombres de usuarios para cada comentario
+      const comentariosConNombres = await Promise.all(
+        comentariosList.map(async (comentario) => {
+          // Intentar obtener el ID del usuario de diferentes campos posibles
+          const userId = comentario.usuario?.idUsr || comentario.idUsuario || comentario.idUsr || comentario.usuario_id || comentario.userId;
+          
+          if (!userId) {
+            return {
+              ...comentario,
+              nombreUsuario: 'Usuario'
+            };
+          }
+          
+          try {
+            const nombreResponse = await getUserNombre(userId);
+            return {
+              ...comentario,
+              nombreUsuario: nombreResponse?.data?.nombre || nombreResponse?.nombre || 'Usuario'
+            };
+          } catch (error) {
+            console.error('Error obteniendo nombre de usuario:', error);
+            return {
+              ...comentario,
+              nombreUsuario: 'Usuario'
+            };
+          }
+        })
+      );
+      
+      setComentarios(comentariosConNombres);
     } catch (error) {
       console.error('Error loading comentarios:', error);
       setComentarios([]);
@@ -681,7 +712,7 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
           <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
           <List>
             {(comentarios || []).map(c => (
-              <ListItem key={c.idComentario || c.id}><ListItemText primary={c.autor || c.usuario?.nombre || c.usuario?.email || c.nombre || 'Anon'} secondary={c.texto || c.comentario} /></ListItem>
+              <ListItem key={c.idComentario || c.id}><ListItemText primary={c.nombreUsuario || 'Usuario'} secondary={c.texto || c.comentario} /></ListItem>
             ))}
           </List>
           <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
