@@ -1,0 +1,43 @@
+# ====================================
+# Dockerfile SIMPLE para servir con Nginx del SERVIDOR
+# ====================================
+# Este Dockerfile solo construye la app React
+# El Nginx del SERVIDOR se encargará de servirla
+
+FROM node:18-alpine AS build
+
+WORKDIR /app
+
+# Copiar dependencias
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm ci --legacy-peer-deps
+
+# Copiar código fuente
+COPY public ./public
+COPY src ./src
+
+# Construir aplicación para producción
+RUN npm run build
+
+# ====================================
+# Stage final: Solo servir archivos estáticos
+# ====================================
+FROM nginx:stable-alpine
+
+# Copiar build de React
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Configuración básica de nginx (solo sirve archivos)
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        try_files $uri /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

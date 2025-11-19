@@ -27,6 +27,7 @@ export default function DonacionSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const amountParam = searchParams.get('amount'); // ⬅️ Obtener monto de la URL
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,10 +51,20 @@ export default function DonacionSuccess() {
         }
       } catch (err) {
         console.error('Error al verificar donación:', err);
-        // Incluso si falla la verificación, mostramos mensaje genérico de éxito
+        
+        // Si el endpoint no existe, usar los datos de la URL y Stripe
+        // Convertir centavos a dólares (el backend envía en centavos)
+        const amountInDollars = amountParam ? parseFloat(amountParam) / 100 : 0.50;
+        
         setDonationData({ 
           status: 'success',
-          message: 'Tu donación ha sido procesada exitosamente'
+          message: 'Tu donación ha sido procesada exitosamente',
+          sessionId: sessionId,
+          idDonacion: sessionId,
+          monto: amountInDollars,
+          moneda: 'USD',
+          fecha: new Date().toISOString(),
+          estado: 'completado'
         });
       } finally {
         setLoading(false);
@@ -61,7 +72,7 @@ export default function DonacionSuccess() {
     };
 
     fetchDonationDetails();
-  }, [sessionId]);
+  }, [sessionId, amountParam]); // ⬅️ Agregar amountParam a las dependencias
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';

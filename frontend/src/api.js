@@ -36,9 +36,9 @@ export const formatFecha = (fecha) => {
 };
 
 // Use proxy in development (package.json has proxy config)
-// In production, use full URL
+// In production, use /api (nginx proxy handles it)
 const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'http://168.181.187.137:8081' 
+  ? '/api'  // Ruta relativa - el nginx del container hace el proxy
   : ''; // Empty string uses proxy from package.json
 
 const api = axios.create({
@@ -254,8 +254,9 @@ export const createDonationSession = async (amount) => {
   
   // Obtener la URL base actual del frontend
   const baseUrl = window.location.origin;
-  const successUrl = `${baseUrl}/donacion/success?session_id={CHECKOUT_SESSION_ID}`;
-  const cancelUrl = `${baseUrl}/donacion/canceled`;
+  // Agregar el monto como parámetro para mostrarlo en la página de éxito
+  const successUrl = `${baseUrl}/donacion/success?session_id={CHECKOUT_SESSION_ID}&amount=${amount}`;
+  const cancelUrl = `${baseUrl}/donacion/cancel`; // ⬅️ Cambiado de 'canceled' a 'cancel'
   
   return api.post('/donaciones/create-session', { 
     amount,
@@ -273,7 +274,8 @@ export const verifyDonation = async (sessionId) => {
   }
   
   return api.get(`/donaciones/verify/${sessionId}`, {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
+    timeout: 5000 // ⬅️ Agregado timeout de 5 segundos
   });
 };
 

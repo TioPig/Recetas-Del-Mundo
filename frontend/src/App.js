@@ -44,7 +44,8 @@ function App() {
             <Route path="/ajustes" element={<Ajustes />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/donacion/success" element={<DonacionSuccess />} />
-            <Route path="/donacion/canceled" element={<DonacionCanceled />} />
+            <Route path="/donacion/cancel" element={<DonacionCanceled />} />
+            <Route path="/donacion/canceled" element={<DonacionCanceled />} /> {/* Ruta legacy por si acaso */}
             <Route path="/debug/likes" element={<DebugLikes />} />
           </Routes>
         </Box>

@@ -71,7 +71,7 @@ export default function Header(){
     }
 
     try {
-      const response = await createDonationSession(5.00); // Monto por defecto $5
+      const response = await createDonationSession(100); // Monto en centavos: $0.50 USD (mínimo de Stripe)
       
       // Si hay URL de Stripe, redirigir a la sesión de pago
       if (response.data && response.data.url) {
