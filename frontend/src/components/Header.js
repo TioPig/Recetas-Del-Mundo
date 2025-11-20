@@ -27,8 +27,13 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CloseIcon from '@mui/icons-material/Close';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
+import MenuList from '@mui/material/MenuList';
+import MenuItem from '@mui/material/MenuItem';
 import UserSidebar from './UserSidebar';
-import { isAuthenticated, isAdmin, createDonationSession } from '../api';
+import { isAuthenticated, isAdmin, createDonationSession, getPaises, getCategorias } from '../api';
 
 export default function Header(){
   const [q, setQ] = useState('');
@@ -36,7 +41,54 @@ export default function Header(){
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthLocal, setIsAuthLocal] = useState(isAuthenticated());
   const [isAdminLocal, setIsAdminLocal] = useState(isAdmin());
+  const [paisesMenuOpen, setPaisesMenuOpen] = useState(false);
+  const [categoriasMenuOpen, setCategoriasMenuOpen] = useState(false);
+  const [paises, setPaises] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [paisesCloseTimeout, setPaisesCloseTimeout] = useState(null);
+  const [categoriasCloseTimeout, setCategoriasCloseTimeout] = useState(null);
   const navigate = useNavigate();
+
+  // Funciones para manejar la apertura/cierre con delay de los mega menús
+  const handlePaisesMouseEnter = () => {
+    if (paisesCloseTimeout) {
+      clearTimeout(paisesCloseTimeout);
+      setPaisesCloseTimeout(null);
+    }
+    setPaisesMenuOpen(true);
+    setCategoriasMenuOpen(false); // Cerrar el otro menú
+    if (categoriasCloseTimeout) {
+      clearTimeout(categoriasCloseTimeout);
+      setCategoriasCloseTimeout(null);
+    }
+  };
+
+  const handlePaisesMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setPaisesMenuOpen(false);
+    }, 300); // 300ms de delay antes de cerrar
+    setPaisesCloseTimeout(timeout);
+  };
+
+  const handleCategoriasMouseEnter = () => {
+    if (categoriasCloseTimeout) {
+      clearTimeout(categoriasCloseTimeout);
+      setCategoriasCloseTimeout(null);
+    }
+    setCategoriasMenuOpen(true);
+    setPaisesMenuOpen(false); // Cerrar el otro menú
+    if (paisesCloseTimeout) {
+      clearTimeout(paisesCloseTimeout);
+      setPaisesCloseTimeout(null);
+    }
+  };
+
+  const handleCategoriasMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setCategoriasMenuOpen(false);
+    }, 300); // 300ms de delay antes de cerrar
+    setCategoriasCloseTimeout(timeout);
+  };
 
   useEffect(()=>{
     const onStorage = (e) => {
@@ -54,7 +106,16 @@ export default function Header(){
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('authChanged', onAuthChanged);
+      // Limpiar timeouts al desmontar
+      if (paisesCloseTimeout) clearTimeout(paisesCloseTimeout);
+      if (categoriasCloseTimeout) clearTimeout(categoriasCloseTimeout);
     };
+  }, [paisesCloseTimeout, categoriasCloseTimeout]);
+
+  // Cargar países y categorías para el megamenu
+  useEffect(() => {
+    getPaises().then(r => setPaises(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+    getCategorias().then(r => setCategorias(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   }, []);
 
   const submitSearch = (e) => {
@@ -101,14 +162,26 @@ export default function Header(){
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#F75442' }}>
-        <Toolbar>
+      <AppBar 
+        position="static" 
+        elevation={4}
+        sx={{ 
+          background: 'linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%)',
+          boxShadow: '0 4px 20px rgba(79, 172, 254, 0.3)'
+        }}
+      >
+        <Toolbar sx={{ py: { xs: 0.5, md: 1 } }}>
           {/* Mobile Menu Button */}
           <IconButton
             color="inherit"
             edge="start"
             onClick={() => setMobileMenuOpen(true)}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ 
+              mr: 2, 
+              display: { md: 'none' },
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.3)' }
+            }}
           >
             <MenuIcon />
           </IconButton>
@@ -116,38 +189,34 @@ export default function Header(){
           {/* Logo */}
           <Box sx={{ flexGrow: 1 }}>
             <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-                  <Typography 
-                    variant="h5" 
-                    component="div" 
-                    sx={{ 
-                      fontWeight: 700, 
-                      color: '#2F4295', 
-                      fontFamily: 'Roboto, sans-serif', 
-                      fontSize: { xs: '1rem', sm: '1.2rem', md: '1.6rem' } 
-                    }}
-                  >
-                    Recetas
-                  </Typography>
-                  <Typography 
-                    variant="subtitle2" 
-                    sx={{ 
-                      fontWeight: 700, 
-                      color: '#2F4295', 
-                      fontFamily: 'Roboto, sans-serif', 
-                      fontSize: { xs: '0.75rem', sm: '0.9rem', md: '1.1rem' } 
-                    }}
-                  >
-                    Del mundo
-                  </Typography>
-                </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box 
                   component="img" 
                   src="/img/cheems-waso.png" 
                   alt="logo" 
-                  sx={{ height: { xs: 28, sm: 32, md: 36 }, width: 'auto' }} 
+                  sx={{ 
+                    height: { xs: 40, sm: 50, md: 60 }, 
+                    width: 'auto',
+                    borderRadius: '50%',
+                    border: '3px solid white',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    transition: 'transform 0.3s',
+                    '&:hover': { transform: 'scale(1.05)' }
+                  }} 
                 />
+                <Typography 
+                  variant="h5" 
+                  component="div" 
+                  sx={{ 
+                    fontWeight: 900, 
+                    color: 'white', 
+                    fontFamily: 'Lato, sans-serif', 
+                    fontSize: { xs: '1.2rem', sm: '1.5rem', md: '1.8rem' },
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  Recetas del Mundo
+                </Typography>
               </Box>
             </RouterLink>
           </Box>
@@ -173,55 +242,289 @@ export default function Header(){
                 ) 
               }} 
               sx={{ 
-                backgroundColor: 'rgba(255,255,255,0.9)', 
-                borderRadius: 1, 
-                minWidth: { sm: 150, md: 200 },
-                '& .MuiInputBase-input': { fontFamily: 'Lato, sans-serif' } 
+                backgroundColor: 'white',
+                borderRadius: '50px', 
+                minWidth: { sm: 200, md: 280 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '50px',
+                  fontFamily: 'Open Sans, sans-serif',
+                  '& fieldset': { border: 'none' },
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                },
+                '& .MuiInputBase-input': { 
+                  fontFamily: 'Open Sans, sans-serif',
+                  color: '#1A202C'
+                }
               }} 
             />
           </Box>
 
           {/* Desktop Menu */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
-            <Button color="inherit" component={RouterLink} to="/" sx={{ fontFamily: 'Lato, sans-serif' }}>
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1, position: 'relative' }}>
+            <Button 
+              color="inherit" 
+              component={RouterLink} 
+              to="/" 
+              sx={{ 
+                fontFamily: 'Open Sans, sans-serif',
+                fontWeight: 600,
+                fontSize: '1rem',
+                px: 2,
+                py: 0.8,
+                borderRadius: '8px',
+                transition: 'all 0.3s',
+                '&:hover': { 
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
               Inicio
             </Button>
-            <Button color="inherit" component={RouterLink} to="/paises" sx={{ fontFamily: 'Lato, sans-serif' }}>
-              Países
-            </Button>
-            <Button color="inherit" component={RouterLink} to="/categorias" sx={{ fontFamily: 'Lato, sans-serif' }}>
-              Categorías
-            </Button>
+
+            {/* Países Megamenu */}
+            <Box 
+              onMouseEnter={handlePaisesMouseEnter}
+              onMouseLeave={handlePaisesMouseLeave}
+              sx={{ position: 'relative' }}
+            >
+              <Button 
+                color="inherit" 
+                endIcon={<KeyboardArrowDownIcon />}
+                sx={{ 
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 0.8,
+                  borderRadius: '8px',
+                  transition: 'all 0.3s',
+                  '&:hover': { 
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                Países
+              </Button>
+              {paisesMenuOpen && (
+                <Paper 
+                  elevation={8}
+                  sx={{ 
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    mt: 1,
+                    minWidth: 600,
+                    maxWidth: 800,
+                    zIndex: 1300,
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <Box sx={{ p: 3 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        mb: 2, 
+                        fontFamily: 'Lato, sans-serif',
+                        fontWeight: 900,
+                        color: '#1A202C',
+                        borderBottom: '2px solid #667EEA',
+                        pb: 1
+                      }}
+                    >
+                      Recetas por País
+                    </Typography>
+                    <Grid container spacing={1}>
+                      {paises.slice(0, 12).map(pais => (
+                        <Grid item xs={6} sm={4} key={pais.idPais}>
+                          <MenuItem
+                            component={RouterLink}
+                            to={`/paises/${pais.idPais}`}
+                            onClick={() => setPaisesMenuOpen(false)}
+                            sx={{
+                              borderRadius: 1,
+                              fontFamily: 'Open Sans, sans-serif',
+                              transition: 'all 0.2s',
+                              '&:hover': {
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                transform: 'translateX(5px)',
+                                color: '#667EEA'
+                              }
+                            }}
+                          >
+                            {pais.nombre}
+                          </MenuItem>
+                        </Grid>
+                      ))}
+                    </Grid>
+                    <Button
+                      component={RouterLink}
+                      to="/paises"
+                      fullWidth
+                      onClick={() => setPaisesMenuOpen(false)}
+                      sx={{
+                        mt: 2,
+                        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+                        color: 'white',
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontWeight: 600,
+                        py: 1,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '0.95rem',
+                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': { 
+                          background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)'
+                        }
+                      }}
+                    >
+                      Ver todos los países →
+                    </Button>
+                  </Box>
+                </Paper>
+              )}
+            </Box>
+
+            {/* Categorías Megamenu */}
+            <Box 
+              onMouseEnter={handleCategoriasMouseEnter}
+              onMouseLeave={handleCategoriasMouseLeave}
+              sx={{ position: 'relative' }}
+            >
+              <Button 
+                color="inherit" 
+                endIcon={<KeyboardArrowDownIcon />}
+                sx={{ 
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 0.8,
+                  borderRadius: '8px',
+                  transition: 'all 0.3s',
+                  '&:hover': { 
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                Categorías
+              </Button>
+              {categoriasMenuOpen && (
+                <Paper 
+                  elevation={8}
+                  sx={{ 
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    mt: 1,
+                    minWidth: 500,
+                    maxWidth: 700,
+                    zIndex: 1300,
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <Box sx={{ p: 3 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        mb: 2, 
+                        fontFamily: 'Lato, sans-serif',
+                        fontWeight: 900,
+                        color: '#1A202C',
+                        borderBottom: '2px solid #667EEA',
+                        pb: 1
+                      }}
+                    >
+                      Categorías de Recetas
+                    </Typography>
+                    <Grid container spacing={1}>
+                      {categorias.map(categoria => {
+                        const catId = categoria.idCat ?? categoria.idCategoria ?? categoria.id;
+                        return (
+                          <Grid item xs={6} sm={4} key={catId || categoria.nombre}>
+                            <MenuItem
+                              component={RouterLink}
+                              to={`/categorias/${catId}`}
+                              onClick={() => setCategoriasMenuOpen(false)}
+                              sx={{
+                                borderRadius: 1,
+                                fontFamily: 'Open Sans, sans-serif',
+                                transition: 'all 0.2s',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                  transform: 'translateX(5px)',
+                                  color: '#667EEA'
+                                }
+                              }}
+                            >
+                              {categoria.nombre}
+                            </MenuItem>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                    <Button
+                      component={RouterLink}
+                      to="/categorias"
+                      fullWidth
+                      onClick={() => setCategoriasMenuOpen(false)}
+                      sx={{
+                        mt: 2,
+                        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+                        color: 'white',
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontWeight: 600,
+                        py: 1,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '0.95rem',
+                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': { 
+                          background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)'
+                        }
+                      }}
+                    >
+                      Ver todas las categorías →
+                    </Button>
+                  </Box>
+                </Paper>
+              )}
+            </Box>
+
             <Button 
               variant="contained" 
               startIcon={<FavoriteIcon />}
               sx={{ 
                 ml: 1, 
-                backgroundColor: '#F75442', 
-                '&:hover': { backgroundColor: '#d64032' },
-                fontFamily: 'Lato, sans-serif'
+                backgroundColor: 'white',
+                color: '#F56565',
+                fontFamily: 'Roboto, sans-serif',
+                fontWeight: 700,
+                borderRadius: '50px',
+                px: 2.5,
+                boxShadow: '0 4px 12px rgba(245, 101, 101, 0.2)',
+                '&:hover': { 
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 16px rgba(245, 101, 101, 0.3)'
+                }
               }}
               onClick={handleDonate}
             >
               Donar
             </Button>
-            
-            {isAdminLocal && (
-              <Button 
-                variant="contained" 
-                component={RouterLink} 
-                to="/admin" 
-                startIcon={<AdminPanelSettingsIcon />}
-                sx={{ 
-                  ml: 1, 
-                  backgroundColor: '#673AB7', 
-                  '&:hover': { backgroundColor: '#512DA8' },
-                  fontFamily: 'Lato, sans-serif'
-                }}
-              >
-                Admin
-              </Button>
-            )}
             
             {isAuthLocal ? (
               <>
@@ -232,20 +535,62 @@ export default function Header(){
                   startIcon={<AddIcon />}
                   sx={{ 
                     ml: 1, 
-                    backgroundColor: '#2F4295', 
-                    '&:hover': { backgroundColor: '#1e2a5e' },
-                    fontFamily: 'Lato, sans-serif'
+                    background: 'linear-gradient(135deg, #F093FB, #F5576C)',
+                    fontFamily: 'Roboto, sans-serif',
+                    fontWeight: 700,
+                    borderRadius: '50px',
+                    px: 2.5,
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 12px rgba(240, 147, 251, 0.3)',
+                    '&:hover': { 
+                      background: 'linear-gradient(135deg, #F5576C, #F093FB)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 16px rgba(240, 147, 251, 0.4)'
+                    }
                   }}
                 >
                   Añadir Receta
                 </Button>
-                <IconButton onClick={()=> setSidebarOpen(true)} sx={{ ml: 1 }}>
-                  <Avatar alt="user" src="/img/user-cheems.png" />
+                <IconButton 
+                  onClick={()=> setSidebarOpen(true)} 
+                  sx={{ 
+                    ml: 1,
+                    transition: 'transform 0.3s',
+                    '&:hover': { transform: 'scale(1.1)' }
+                  }}
+                >
+                  <Avatar 
+                    alt="user" 
+                    src="/img/user-cheems.png"
+                    sx={{
+                      width: 45,
+                      height: 45,
+                      border: '3px solid white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                    }}
+                  />
                 </IconButton>
               </>
             ) : (
               <>
-                <Button color="inherit" component={RouterLink} to="/login" sx={{ fontFamily: 'Lato, sans-serif' }}>
+                <Button 
+                  color="inherit" 
+                  component={RouterLink} 
+                  to="/login" 
+                  sx={{ 
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    px: 2,
+                    py: 0.8,
+                    borderRadius: '8px',
+                    transition: 'all 0.3s',
+                    '&:hover': { 
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
                   Acceder
                 </Button>
                 <Button 
@@ -290,7 +635,7 @@ export default function Header(){
       >
         <Box sx={{ width: 280 }}>
           {/* Header del Drawer */}
-          <Box sx={{ p: 2, backgroundColor: '#F75442', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ p: 2, background: 'linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>
               Menú
             </Typography>
@@ -354,46 +699,28 @@ export default function Header(){
                 sx={{ backgroundColor: '#FFF5F5' }}
               >
                 <ListItemIcon>
-                  <FavoriteIcon sx={{ color: '#F75442' }} />
+                  <FavoriteIcon sx={{ color: '#F56565' }} />
                 </ListItemIcon>
                 <ListItemText 
                   primary="Donar" 
-                  primaryTypographyProps={{ fontWeight: 600, color: '#F75442' }}
+                  primaryTypographyProps={{ fontWeight: 600, color: '#F56565' }}
                 />
               </ListItemButton>
             </ListItem>
-            {isAdminLocal && (
-              <ListItem disablePadding>
-                <ListItemButton 
-                  component={RouterLink} 
-                  to="/admin"
-                  onClick={handleMobileMenuClose}
-                  sx={{ backgroundColor: '#F3E5F5' }}
-                >
-                  <ListItemIcon>
-                    <AdminPanelSettingsIcon sx={{ color: '#673AB7' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Panel Admin" 
-                    primaryTypographyProps={{ fontWeight: 600, color: '#673AB7' }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            )}
             {isAuthLocal ? (
               <ListItem disablePadding>
                 <ListItemButton 
                   component={RouterLink} 
                   to="/nueva-receta"
                   onClick={handleMobileMenuClose}
-                  sx={{ backgroundColor: '#F6F0E0' }}
+                  sx={{ backgroundColor: 'rgba(240, 147, 251, 0.1)' }}
                 >
                   <ListItemIcon>
-                    <AddIcon sx={{ color: '#F75442' }} />
+                    <AddIcon sx={{ color: '#F093FB' }} />
                   </ListItemIcon>
                   <ListItemText 
                     primary="Añadir Receta" 
-                    primaryTypographyProps={{ fontWeight: 600, color: '#F75442' }}
+                    primaryTypographyProps={{ fontWeight: 600, color: '#F093FB' }}
                   />
                 </ListItemButton>
               </ListItem>

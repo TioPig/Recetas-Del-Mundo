@@ -41,7 +41,9 @@ import {
   formatFecha,
   getComentariosReceta,
   adminDeleteComentario,
-  getUserNombre
+  getUserNombre,
+  getEstrellaStats,
+  getMeGustaCount
 } from '../api';
 
 function AdminRecetas() {
@@ -55,6 +57,7 @@ function AdminRecetas() {
   const [detailTab, setDetailTab] = useState(0);
   const [comentarios, setComentarios] = useState([]);
   const [ingredientes, setIngredientes] = useState([]);
+  const [recetasStats, setRecetasStats] = useState({});
   const [formData, setFormData] = useState({
     nombre: '',
     urlImagen: '',
@@ -69,7 +72,45 @@ function AdminRecetas() {
     try {
       setLoading(true);
       const response = await adminGetRecetas();
-      setRecetas(response.data || []);
+      const recetasList = response.data || [];
+      setRecetas(recetasList);
+      
+      // Cargar estadísticas para todas las recetas
+      const statsPromises = recetasList.map(async (receta) => {
+        try {
+          const [estrellasRes, likesRes] = await Promise.all([
+            getEstrellaStats(receta.idReceta).catch((err) => {
+              console.error(`Error obteniendo estrellas para receta ${receta.idReceta}:`, err);
+              return { data: { promedio: 0, total: 0, avgStars: 0, totalStars: 0 } };
+            }),
+            getMeGustaCount(receta.idReceta).catch(() => ({ data: { count: 0 } }))
+          ]);
+          
+          console.log(`Stats para receta ${receta.idReceta}:`, { estrellasRes: estrellasRes.data, likesRes: likesRes.data });
+          
+          return {
+            idReceta: receta.idReceta,
+            avgStars: estrellasRes.data?.promedio || estrellasRes.data?.avgStars || 0,
+            totalStars: estrellasRes.data?.total || estrellasRes.data?.totalStars || 0,
+            likesCount: likesRes.data?.count || 0
+          };
+        } catch {
+          return {
+            idReceta: receta.idReceta,
+            avgStars: 0,
+            totalStars: 0,
+            likesCount: 0
+          };
+        }
+      });
+      
+      const stats = await Promise.all(statsPromises);
+      const statsMap = {};
+      stats.forEach(stat => {
+        statsMap[stat.idReceta] = stat;
+      });
+      setRecetasStats(statsMap);
+      
       setError(null);
     } catch (err) {
       setError('Error al cargar recetas: ' + (err.response?.data?.mensaje || err.message));
@@ -266,6 +307,8 @@ function AdminRecetas() {
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Categoría</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Estado</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Visitas</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Likes</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Estrellas</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Fecha</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Acciones</TableCell>
             </TableRow>
@@ -285,6 +328,24 @@ function AdminRecetas() {
                   />
                 </TableCell>
                 <TableCell>{receta.visitas || 0}</TableCell>
+                <TableCell>
+                  <Chip 
+                    label={recetasStats[receta.idReceta]?.likesCount || 0}
+                    color="primary"
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      ⭐ {recetasStats[receta.idReceta]?.avgStars?.toFixed(1) || '0.0'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ({recetasStats[receta.idReceta]?.totalStars || 0} votos)
+                    </Typography>
+                  </Box>
+                </TableCell>
                 <TableCell>
                   <Typography variant="caption">
                     {formatFecha(receta.fechaCreacion)}
@@ -359,6 +420,8 @@ function AdminRecetas() {
                     <Chip label={`País ID: ${selectedReceta.idPais}`} />
                     <Chip label={`Categoría ID: ${selectedReceta.idCat}`} />
                     <Chip label={`Visitas: ${selectedReceta.visitas || 0}`} />
+                    <Chip label={`Likes: ${recetasStats[selectedReceta.idReceta]?.likesCount || 0}`} color="primary" variant="outlined" />
+                    <Chip label={`⭐ ${recetasStats[selectedReceta.idReceta]?.avgStars?.toFixed(1) || '0.0'} (${recetasStats[selectedReceta.idReceta]?.totalStars || 0} votos)`} color="warning" variant="outlined" />
                     <Chip label={`Usuario ID: ${selectedReceta.idUsr}`} />
                     <Chip label={`Fecha: ${formatFecha(selectedReceta.fechaCreacion)}`} />
                   </Box>

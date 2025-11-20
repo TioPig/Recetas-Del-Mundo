@@ -66,9 +66,6 @@ function AdminPanel() {
         <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
           🛡️ Panel de Administración
         </Typography>
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Aquí puedes gestionar todos los aspectos de Recetas del Mundo
-        </Alert>
       </Paper>
 
       <Paper elevation={3}>

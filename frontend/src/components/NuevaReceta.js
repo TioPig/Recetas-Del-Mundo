@@ -7,13 +7,6 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-import Autocomplete from '@mui/material/Autocomplete';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import Divider from '@mui/material/Divider';
@@ -37,13 +30,11 @@ export default function NuevaReceta() {
   const [selectedPais, setSelectedPais] = useState(null);
   const [selectedCategoria, setSelectedCategoria] = useState(null);
   
-  // Estados para ingredientes
-  const [ingredientes, setIngredientes] = useState([]);
-  const [newIngrediente, setNewIngrediente] = useState('');
+  // Estados para ingredientes (ahora es texto)
+  const [ingredientes, setIngredientes] = useState('');
   
   // Estados para preparación
   const [preparacion, setPreparacion] = useState('');
-  const MAX_PREPARACION_LENGTH = 250;
   
   // Estados para feedback
   const [loading, setLoading] = useState(false);
@@ -67,17 +58,6 @@ export default function NuevaReceta() {
     });
   }, []);
 
-  const handleAddIngrediente = () => {
-    if (newIngrediente.trim()) {
-      setIngredientes([...ingredientes, newIngrediente.trim()]);
-      setNewIngrediente('');
-    }
-  };
-
-  const handleRemoveIngrediente = (index) => {
-    setIngredientes(ingredientes.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -95,8 +75,8 @@ export default function NuevaReceta() {
       setError('Debes seleccionar una categoría');
       return;
     }
-    if (ingredientes.length === 0) {
-      setError('Debes agregar al menos un ingrediente');
+    if (!ingredientes.trim()) {
+      setError('Debes agregar ingredientes');
       return;
     }
     if (!preparacion.trim()) {
@@ -123,7 +103,7 @@ export default function NuevaReceta() {
         idPais: selectedPais.idPais || selectedPais.id,
         idCat: selectedCategoria.idCat || selectedCategoria.id,
         idUsr: userId,
-        ingredientes: ingredientes.map(ing => ({ nombre: ing })),
+        ingredientes: [{ nombre: ingredientes.trim() }],
         preparacion: preparacion.trim()
       };
 
@@ -149,25 +129,30 @@ export default function NuevaReceta() {
     setUrlImagen('');
     setSelectedPais(null);
     setSelectedCategoria(null);
-    setIngredientes([]);
+    setIngredientes('');
     setPreparacion('');
-    setNewIngrediente('');
     setError('');
   };
 
   return (
     <Box>
       {/* Hero Section */}
-      <Box sx={{ backgroundColor: '#F6F0E0', py: { xs: 2, sm: 3, md: 4 } }}>
+      <Box 
+        sx={{ 
+          background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+          py: { xs: 4, sm: 6, md: 8 },
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+        }}
+      >
         <Container>
           <Box textAlign="center">
             <Typography 
               variant="h2" 
               sx={{ 
-                color: '#6b4f34', 
+                color: 'white',
                 fontFamily: 'Lato, sans-serif', 
-                fontWeight: 700,
-                fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' }
+                fontWeight: 900,
+                fontSize: { xs: '1.75rem', sm: '2.75rem', md: '3.5rem' }
               }}
             >
               Nueva Receta
@@ -175,10 +160,11 @@ export default function NuevaReceta() {
             <Typography 
               variant="subtitle1" 
               sx={{ 
-                color: '#6b4f34', 
-                fontFamily: 'Lato, sans-serif',
-                mt: 1,
-                fontSize: { xs: '0.9rem', sm: '1rem' }
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontFamily: 'Open Sans, sans-serif',
+                mt: 1.5,
+                fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.2rem' },
+                fontWeight: 500
               }}
             >
               Comparte tu receta con el mundo
@@ -187,39 +173,54 @@ export default function NuevaReceta() {
         </Container>
       </Box>
 
-      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 4, md: 5 }, px: { xs: 2, sm: 3 }, backgroundColor: '#F7FAFC', minHeight: '100vh' }}>
         {error && (
           <Alert 
             severity="error" 
-            sx={{ mb: 3 }} 
+            variant="filled"
+            sx={{ 
+              mb: 3,
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 600
+            }} 
             onClose={() => setError('')}
           >
             {error}
           </Alert>
         )}
 
-        <Grid container spacing={{ xs: 2, sm: 3 }} justifyContent="center">
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} justifyContent="center">
           {/* Columna Izquierda - Formulario Principal */}
-          <Grid item xs={12} md={9}>
+          <Grid item xs={12} lg={9}>
             {/* Información Básica */}
-            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ImageIcon sx={{ mr: 1, color: '#F75442', fontSize: { xs: 20, sm: 24 } }} />
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: { xs: 2.5, sm: 3.5, md: 4.5 }, 
+                mb: { xs: 2, sm: 3, md: 4 }, 
+                borderRadius: 3,
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2.5, md: 3.5 } }}>
+                <ImageIcon sx={{ mr: { xs: 1.5, md: 2 }, color: '#667EEA', fontSize: { xs: 24, sm: 28, md: 32 } }} />
                 <Typography 
                   variant="h6" 
                   sx={{ 
                     fontFamily: 'Lato, sans-serif', 
-                    fontWeight: 600,
-                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                    fontWeight: 900,
+                    color: '#1A202C',
+                    fontSize: { xs: '1.1rem', sm: '1.35rem', md: '1.6rem' }
                   }}
                 >
                   Información Básica
                 </Typography>
               </Box>
               
-              <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
+              <Divider sx={{ mb: { xs: 2, sm: 3, md: 4 }, borderColor: '#E2E8F0' }} />
 
-              <Grid container spacing={2}>
+              <Grid container spacing={{ xs: 2.5, md: 3.5 }}>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -228,6 +229,24 @@ export default function NuevaReceta() {
                     onChange={(e) => setNombre(e.target.value)}
                     required
                     placeholder="Ej: Tacos al Pastor"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.1rem' },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#667EEA',
+                        },
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.1rem' },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667EEA',
+                        fontWeight: 600
+                      },
+                    }}
                   />
                 </Grid>
 
@@ -238,6 +257,24 @@ export default function NuevaReceta() {
                     value={urlImagen}
                     onChange={(e) => setUrlImagen(e.target.value)}
                     placeholder="https://ejemplo.com/imagen.jpg"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.1rem' },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#667EEA',
+                        },
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.1rem' },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667EEA',
+                        fontWeight: 600
+                      },
+                    }}
                   />
                   {urlImagen && (
                     <Box sx={{ mt: 2, textAlign: 'center' }}>
@@ -248,8 +285,10 @@ export default function NuevaReceta() {
                         sx={{
                           maxWidth: '100%',
                           maxHeight: { xs: 180, sm: 220, md: 250 },
-                          borderRadius: 1,
-                          objectFit: 'cover'
+                          borderRadius: 3,
+                          objectFit: 'cover',
+                          border: '2px solid #E2E8F0',
+                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)'
                         }}
                         onError={(e) => { e.target.src = 'https://placehold.co/600x360'; }}
                       />
@@ -260,183 +299,223 @@ export default function NuevaReceta() {
             </Paper>
 
             {/* País y Categoría */}
-            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <PublicIcon sx={{ mr: 1, color: '#F75442', fontSize: { xs: 20, sm: 24 } }} />
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: { xs: 2.5, sm: 3.5, md: 4.5 }, 
+                mb: { xs: 2, sm: 3, md: 4 }, 
+                borderRadius: 3,
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2.5, md: 3.5 } }}>
+                <PublicIcon sx={{ mr: { xs: 1.5, md: 2 }, color: '#667EEA', fontSize: { xs: 24, sm: 28, md: 32 } }} />
                 <Typography 
                   variant="h6" 
                   sx={{ 
                     fontFamily: 'Lato, sans-serif', 
-                    fontWeight: 600,
-                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                    fontWeight: 900,
+                    color: '#1A202C',
+                    fontSize: { xs: '1.1rem', sm: '1.35rem', md: '1.6rem' }
                   }}
                 >
                   Clasificación
                 </Typography>
               </Box>
               
-              <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
+              <Divider sx={{ mb: { xs: 2, sm: 3, md: 4 }, borderColor: '#E2E8F0' }} />
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    options={paises}
-                    getOptionLabel={(option) => option.nombre || ''}
-                    value={selectedPais}
-                    onChange={(event, newValue) => setSelectedPais(newValue)}
-                    renderInput={(params) => (
-                      <TextField {...params} label="País" required />
-                    )}
-                    ListboxProps={{
-                      style: {
-                        maxHeight: '300px',
-                      }
+              <Grid container spacing={{ xs: 2.5, md: 3.5 }}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="País"
+                    value={selectedPais?.idPais || selectedPais?.id || ''}
+                    onChange={(e) => {
+                      const paisId = parseInt(e.target.value);
+                      const pais = paises.find(p => (p.idPais || p.id) === paisId);
+                      setSelectedPais(pais || null);
                     }}
-                    renderOption={(props, option) => (
-                      <li {...props} style={{ padding: '10px 16px' }}>
-                        <Typography variant="body1">{option.nombre}</Typography>
-                      </li>
-                    )}
-                  />
+                    required
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    SelectProps={{
+                      native: true,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.15rem', lg: '1.2rem' },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#667EEA',
+                        },
+                      },
+                      '& .MuiOutlinedInput-input': {
+                        padding: { xs: '16px 14px !important', md: '20px 14px !important', lg: '22px 14px !important' }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.15rem', lg: '1.2rem' },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667EEA',
+                        fontWeight: 600
+                      },
+                    }}
+                  >
+                    <option value="">Selecciona un país</option>
+                    {paises.map((pais) => (
+                      <option key={pais.idPais || pais.id} value={pais.idPais || pais.id}>
+                        {pais.nombre}
+                      </option>
+                    ))}
+                  </TextField>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    options={categorias}
-                    getOptionLabel={(option) => option.nombre || ''}
-                    value={selectedCategoria}
-                    onChange={(event, newValue) => setSelectedCategoria(newValue)}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Categoría" required />
-                    )}
-                    ListboxProps={{
-                      style: {
-                        maxHeight: '300px',
-                      }
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Categoría"
+                    value={selectedCategoria?.idCat || selectedCategoria?.id || ''}
+                    onChange={(e) => {
+                      const categoriaId = parseInt(e.target.value);
+                      const categoria = categorias.find(c => (c.idCat || c.id) === categoriaId);
+                      setSelectedCategoria(categoria || null);
                     }}
-                    renderOption={(props, option) => (
-                      <li {...props} style={{ padding: '10px 16px' }}>
-                        <Typography variant="body1">{option.nombre}</Typography>
-                      </li>
-                    )}
-                  />
+                    required
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    SelectProps={{
+                      native: true,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.15rem', lg: '1.2rem' },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#667EEA',
+                        },
+                      },
+                      '& .MuiOutlinedInput-input': {
+                        padding: { xs: '16px 14px !important', md: '20px 14px !important', lg: '22px 14px !important' }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: { xs: '1rem', md: '1.15rem', lg: '1.2rem' },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667EEA',
+                        fontWeight: 600
+                      },
+                    }}
+                  >
+                    <option value="">Selecciona una categoría</option>
+                    {categorias.map((categoria) => (
+                      <option key={categoria.idCat || categoria.id} value={categoria.idCat || categoria.id}>
+                        {categoria.nombre}
+                      </option>
+                    ))}
+                  </TextField>
                 </Grid>
               </Grid>
             </Paper>
 
             {/* Ingredientes */}
-            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                  <RestaurantIcon sx={{ mr: 1, color: '#F75442', fontSize: { xs: 20, sm: 24 } }} />
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontFamily: 'Lato, sans-serif', 
-                      fontWeight: 600,
-                      fontSize: { xs: '1rem', sm: '1.25rem' }
-                    }}
-                  >
-                    Ingredientes
-                  </Typography>
-                </Box>
-                <Chip 
-                  label={ingredientes.length}
-                  size="small"
-                />
-              </Box>
-              
-              <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
-
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, mb: 2 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Agregar ingrediente"
-                  value={newIngrediente}
-                  onChange={(e) => setNewIngrediente(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddIngrediente();
-                    }
-                  }}
-                  placeholder="Ej: 2 tazas de harina"
-                />
-                <Button 
-                  variant="contained" 
-                  onClick={handleAddIngrediente}
-                  startIcon={<AddIcon />}
-                  fullWidth
-                  sx={{ 
-                    backgroundColor: '#F75442', 
-                    '&:hover': { backgroundColor: '#d43f2f' },
-                    minWidth: { sm: 'auto' }
-                  }}
-                >
-                  Agregar
-                </Button>
-              </Box>
-
-              {ingredientes.length > 0 ? (
-                <List sx={{ p: 0 }}>
-                  {ingredientes.map((ing, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton edge="end" onClick={() => handleRemoveIngrediente(index)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                      sx={{ 
-                        border: '1px solid #eee', 
-                        borderRadius: 1, 
-                        mb: 1,
-                        px: { xs: 1, sm: 2 }
-                      }}
-                    >
-                      <ListItemText 
-                        primary={`${index + 1}. ${ing}`}
-                        primaryTypographyProps={{
-                          fontSize: { xs: '0.9rem', sm: '1rem' }
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : (
-                <Box sx={{ 
-                  textAlign: 'center', 
-                  py: { xs: 2, sm: 3 }, 
-                  backgroundColor: '#f9f9f9', 
-                  borderRadius: 1,
-                  border: '1px dashed #ddd'
-                }}>
-                  <RestaurantIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#ddd', mb: 1 }} />
-                  <Typography color="text.secondary" variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                    No hay ingredientes agregados
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
-
-            {/* Preparación */}
-            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <FormatListNumberedIcon sx={{ mr: 1, color: '#F75442', fontSize: { xs: 20, sm: 24 } }} />
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: { xs: 2.5, sm: 3.5, md: 4.5 }, 
+                mb: { xs: 2, sm: 3, md: 4 }, 
+                borderRadius: 3,
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2.5, md: 3.5 } }}>
+                <RestaurantIcon sx={{ mr: { xs: 1.5, md: 2 }, color: '#667EEA', fontSize: { xs: 24, sm: 28, md: 32 } }} />
                 <Typography 
                   variant="h6" 
                   sx={{ 
                     fontFamily: 'Lato, sans-serif', 
-                    fontWeight: 600,
-                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                    fontWeight: 900,
+                    color: '#1A202C',
+                    fontSize: { xs: '1.1rem', sm: '1.35rem', md: '1.6rem' }
+                  }}
+                >
+                  Ingredientes
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ mb: { xs: 2, sm: 3, md: 4 }, borderColor: '#E2E8F0' }} />
+
+              <TextField
+                fullWidth
+                multiline
+                rows={8}
+                label="Ingredientes (uno por línea)"
+                value={ingredientes}
+                onChange={(e) => setIngredientes(e.target.value)}
+                required
+                placeholder="Ejemplo:&#10;2 tazas de harina&#10;1 cucharada de azúcar&#10;500g de carne&#10;..."
+                helperText="Escribe cada ingrediente en una línea separada"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: { xs: '1rem', md: '1.1rem' },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#667EEA',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: { xs: '1rem', md: '1.1rem' },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#667EEA',
+                    fontWeight: 600
+                  },
+                  '& .MuiFormHelperText-root': {
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: { xs: '0.85rem', md: '0.95rem' }
+                  }
+                }}
+              />
+            </Paper>
+
+            {/* Preparación */}
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: { xs: 2.5, sm: 3.5, md: 4.5 }, 
+                borderRadius: 3,
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2.5, md: 3.5 } }}>
+                <FormatListNumberedIcon sx={{ mr: { xs: 1.5, md: 2 }, color: '#667EEA', fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontFamily: 'Lato, sans-serif', 
+                    fontWeight: 900,
+                    color: '#1A202C',
+                    fontSize: { xs: '1.1rem', sm: '1.35rem', md: '1.6rem' }
                   }}
                 >
                   Preparación
                 </Typography>
               </Box>
               
-              <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
+              <Divider sx={{ mb: { xs: 2, sm: 3, md: 4 }, borderColor: '#E2E8F0' }} />
 
               <TextField
                 fullWidth
@@ -447,87 +526,200 @@ export default function NuevaReceta() {
                 multiline
                 rows={8}
                 placeholder="Describe los pasos de preparación..."
-                inputProps={{ maxLength: MAX_PREPARACION_LENGTH }}
-                helperText={`${preparacion.length}/${MAX_PREPARACION_LENGTH} caracteres`}
+                helperText="Escribe las instrucciones paso a paso"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: { xs: '1rem', md: '1.1rem' },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#667EEA',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: { xs: '1rem', md: '1.1rem' },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#667EEA',
+                    fontWeight: 600
+                  },
+                  '& .MuiFormHelperText-root': {
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: { xs: '0.85rem', md: '0.95rem' }
+                  }
+                }}
               />
             </Paper>
           </Grid>
 
           {/* Columna Derecha - Resumen */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} lg={3}>
             <Paper 
-              elevation={2} 
+              elevation={0} 
               sx={{ 
-                p: { xs: 2, sm: 3 }, 
-                borderRadius: 2, 
-                position: { md: 'sticky' },
-                top: { md: 20 },
-                backgroundColor: '#F6F0E0'
+                p: { xs: 2.5, sm: 3.5, md: 4, lg: 5 }, 
+                borderRadius: 3,
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)',
+                position: { lg: 'sticky' },
+                top: { lg: 20 },
+                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
               }}
             >
               <Typography 
                 variant="h6" 
                 sx={{ 
                   fontFamily: 'Lato, sans-serif', 
-                  fontWeight: 600, 
-                  mb: 2, 
-                  color: '#6b4f34',
-                  fontSize: { xs: '1rem', sm: '1.25rem' }
+                  fontWeight: 900, 
+                  mb: { xs: 2.5, md: 3, lg: 3.5 }, 
+                  color: '#1A202C',
+                  fontSize: { xs: '1.1rem', sm: '1.35rem', md: '1.5rem', lg: '1.65rem' }
                 }}
               >
                 Resumen
               </Typography>
               
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: { xs: 2.5, md: 3, lg: 3.5 }, borderColor: '#E2E8F0' }} />
               
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+              <Box sx={{ mb: { xs: 2, md: 2.5, lg: 3 } }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 0.5, 
+                    fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    color: '#667EEA'
+                  }}
+                >
                   Nombre
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem', lg: '1.15rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    color: '#1A202C'
+                  }}
+                >
                   {nombre || 'Sin nombre'}
                 </Typography>
               </Box>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+              <Box sx={{ mb: { xs: 2, md: 2.5, lg: 3 } }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 0.5, 
+                    fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    color: '#667EEA'
+                  }}
+                >
                   País
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem', lg: '1.15rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    color: '#1A202C'
+                  }}
+                >
                   {selectedPais?.nombre || 'No seleccionado'}
                 </Typography>
               </Box>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+              <Box sx={{ mb: { xs: 2, md: 2.5, lg: 3 } }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 0.5, 
+                    fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    color: '#667EEA'
+                  }}
+                >
                   Categoría
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem', lg: '1.15rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    color: '#1A202C'
+                  }}
+                >
                   {selectedCategoria?.nombre || 'No seleccionada'}
                 </Typography>
               </Box>
 
-              <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: { xs: 2.5, md: 3, lg: 3.5 }, borderColor: '#E2E8F0' }} />
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+              <Box sx={{ mb: { xs: 2, md: 2.5, lg: 3 } }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 0.5, 
+                    fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    color: '#667EEA'
+                  }}
+                >
                   Ingredientes
                 </Typography>
-                <Chip label={ingredientes.length} size="small" />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    color: '#718096'
+                  }}
+                >
+                  {ingredientes.trim() ? `${ingredientes.trim().split('\n').filter(i => i.trim()).length} ingredientes` : 'Sin ingredientes'}
+                </Typography>
               </Box>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+              <Box sx={{ mb: { xs: 2, md: 2.5, lg: 3 } }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 0.5, 
+                    fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    color: '#667EEA'
+                  }}
+                >
                   Preparación
                 </Typography>
-                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                  {preparacion.length > 0 ? `${preparacion.length}/${MAX_PREPARACION_LENGTH} caracteres` : 'Sin preparación'}
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem', lg: '1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    color: '#718096'
+                  }}
+                >
+                  {preparacion.length > 0 ? `${preparacion.length} caracteres` : 'Sin preparación'}
                 </Typography>
               </Box>
 
-              <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: { xs: 2.5, md: 3, lg: 3.5 }, borderColor: '#E2E8F0' }} />
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 2, lg: 2.5 } }}>
                 <Button 
                   variant="contained"
                   fullWidth
@@ -535,11 +727,23 @@ export default function NuevaReceta() {
                   onClick={handleSubmit}
                   disabled={loading}
                   sx={{ 
-                    backgroundColor: '#F75442',
-                    '&:hover': { 
-                      backgroundColor: '#d43f2f'
+                    background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                    color: 'white',
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 700,
+                    borderRadius: 50,
+                    py: { xs: 1.5, md: 1.8, lg: 2 },
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem', lg: '1.1rem' },
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 16px rgba(240, 147, 251, 0.4)'
                     },
-                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                    '&.Mui-disabled': {
+                      background: '#E2E8F0',
+                      color: '#A0AEC0'
+                    },
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   {loading ? 'Creando...' : 'Crear Receta'}
@@ -550,7 +754,21 @@ export default function NuevaReceta() {
                   fullWidth
                   onClick={handleReset}
                   disabled={loading}
-                  sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}
+                  sx={{ 
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem', lg: '1.1rem' },
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 600,
+                    borderRadius: 50,
+                    borderColor: '#667EEA',
+                    color: '#667EEA',
+                    py: { xs: 1.2, md: 1.5, lg: 1.7 },
+                    '&:hover': {
+                      borderColor: '#764BA2',
+                      backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
                 >
                   Limpiar
                 </Button>
@@ -570,11 +788,19 @@ export default function NuevaReceta() {
 
       <Snackbar
         open={success}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={() => setSuccess(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity="success" sx={{ width: '100%' }}>
+        <Alert 
+          severity="success" 
+          variant="filled"
+          sx={{ 
+            width: '100%',
+            fontFamily: 'Open Sans, sans-serif',
+            fontWeight: 600
+          }}
+        >
           Receta creada exitosamente! Redirigiendo...
         </Alert>
       </Snackbar>

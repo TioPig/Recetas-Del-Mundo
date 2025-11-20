@@ -31,7 +31,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import { getRecetasByCategoria, getCategoria, postLikeReceta, deleteLikeReceta, postStarReceta, deleteStarReceta, postFavoritoReceta, deleteFavoritoReceta, getComentariosReceta, postComentarioReceta, isAuthenticated, getEstrellaStats, getMeGustaCount, getFavoritos, getMeGustas, getEstrellas, getPaises, formatFecha, getUserNombre } from '../api';
+import { getRecetasByCategoria, getCategoria, postLikeReceta, deleteLikeReceta, postStarReceta, deleteStarReceta, postFavoritoReceta, deleteFavoritoReceta, getComentariosReceta, postComentarioReceta, isAuthenticated, isAdmin, getEstrellaStats, getMeGustaCount, getFavoritos, getMeGustas, getEstrellas, getPaises, formatFecha, getUserNombre } from '../api';
 import AuthPromptDialog from './AuthPromptDialog';
 import RatingDialog from './RatingDialog';
 import Pagination from '@mui/material/Pagination';
@@ -45,17 +45,17 @@ export default function RecetasByCategoria(){
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Estados para filtros - MOVER ANTES DE LOS useEffect
+  // Estados para filtros
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [paises, setPaises] = useState([]);
   const [selectedPais, setSelectedPais] = useState(null);
   const [searchNombre, setSearchNombre] = useState('');
-  const [sortByStars, setSortByStars] = useState(''); // '', 'asc', 'desc'
-  const [recetasWithStars, setRecetasWithStars] = useState(new Map()); // Map de idReceta -> promedio estrellas
+  const [sortByStars, setSortByStars] = useState('');
+  const [recetasWithStars, setRecetasWithStars] = useState(new Map());
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
   
-  // Estados temporales para filtros (solo en el drawer)
+  // Estados temporales para filtros
   const [tempSelectedPais, setTempSelectedPais] = useState(null);
   const [tempSearchNombre, setTempSearchNombre] = useState('');
   const [tempSortByStars, setTempSortByStars] = useState('');
@@ -64,14 +64,18 @@ export default function RecetasByCategoria(){
   
   // Otros estados
   const [selectedReceta, setSelectedReceta] = useState(null);
+  const [openReceta, setOpenReceta] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [ratingRecetaId, setRatingRecetaId] = useState(null);
   const [ratingRecetaNombre, setRatingRecetaNombre] = useState('');
   const [userInteractions, setUserInteractions] = useState({ likes: new Set(), favoritos: new Set(), estrellas: new Map() });
-  const [modalStats, setModalStats] = useState({ likesCount: 0, avgStars: 0, totalStars: 0 }); // Estadísticas del modal
+  const [modalStats, setModalStats] = useState({ likesCount: 0, avgStars: 0, totalStars: 0 });
   const [comentarios, setComentarios] = useState([]);
   const [newComentario, setNewComentario] = useState('');
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const perPage = 20;
 
   useEffect(()=>{
     setLoading(true);
@@ -83,14 +87,10 @@ export default function RecetasByCategoria(){
         setCat(rCat && rCat.data ? rCat.data : null);
         setError(null);
         
-        // NO cargar estadísticas al listar - solo en el modal
-        
-        // Cargar estadísticas de estrellas para ordenamiento si está activo
         if(sortByStars) {
           loadAllRecetasStars(list);
         }
         
-        // Cargar interacciones del usuario si está autenticado
         if(isAuthenticated()) {
           loadUserInteractions();
         }
@@ -100,254 +100,188 @@ export default function RecetasByCategoria(){
         setRecetas([]);
         setCat(null);
       })
-      .finally(()=> setLoading(false));
-  },[id]);
+      .finally(()=>{
+        setLoading(false);
+      });
+  }, [id, sortByStars]);
 
-  // Cargar países para el filtro
   useEffect(() => {
     getPaises()
       .then(res => {
-        const paisesData = res?.data || [];
-        setPaises(paisesData);
+        const paisesData = res?.data || res;
+        const list = Array.isArray(paisesData) ? paisesData : (Array.isArray(paisesData?.paises) ? paisesData.paises : []);
+        setPaises(list);
       })
-      .catch(err => console.error('Error cargando países:', err));
+      .catch(() => setPaises([]));
   }, []);
 
-  // Cargar estadísticas de estrellas cuando se activa el ordenamiento
-  useEffect(() => {
-    if(sortByStars && recetas.length > 0) {
-      loadAllRecetasStars(recetas);
-    }
-  }, [sortByStars]);
-
-  // Función para cargar estadísticas de estrellas de todas las recetas
   const loadAllRecetasStars = async (recetasList) => {
-    try {
-      const starsMap = new Map();
-      const promises = recetasList.map(async (receta) => {
-        const recetaId = receta.idReceta || receta.id;
-        try {
-          const res = await getEstrellaStats(recetaId);
+    const promises = recetasList.map(r => {
+      const recetaId = r.idReceta || r.id;
+      return getEstrellaStats(recetaId)
+        .then(res => {
           const data = res?.data || res;
-          const promedio = data?.promedio || data?.average || data?.avg || 0;
-          starsMap.set(recetaId, promedio);
-        } catch {
-          starsMap.set(recetaId, 0);
-        }
-      });
-      await Promise.all(promises);
-      setRecetasWithStars(starsMap);
-    } catch (e) {
-      console.error('Error cargando estadísticas de estrellas:', e);
-    }
+          return { id: recetaId, avg: data?.promedio || data?.average || data?.avg || 0 };
+        })
+        .catch(() => ({ id: recetaId, avg: 0 }));
+    });
+    
+    const results = await Promise.all(promises);
+    const newMap = new Map();
+    results.forEach(r => newMap.set(r.id, r.avg));
+    setRecetasWithStars(newMap);
   };
 
-  // Función para cargar interacciones del usuario (favoritos, likes, estrellas)
   const loadUserInteractions = async () => {
     try {
-      // Obtener ID del usuario actual
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const currentUserId = user.id_usr || user.idUsr || user.id;
-
-      const [favoritosRes, likesRes, estrellasRes] = await Promise.all([
+      const [favRes, likesRes, starsRes] = await Promise.all([
         getFavoritos().catch(() => ({ data: [] })),
         getMeGustas().catch(() => ({ data: [] })),
         getEstrellas().catch(() => ({ data: [] }))
       ]);
-
-      const favoritosData = Array.isArray(favoritosRes?.data) ? favoritosRes.data : [];
-      const likesData = Array.isArray(likesRes?.data) ? likesRes.data : [];
-      const estrellasData = Array.isArray(estrellasRes?.data) ? estrellasRes.data : [];
-
-      const newLikes = new Set();
-      const newFavoritos = new Set();
-      const newEstrellas = new Map();
-
-      // Procesar favoritos - filtrar solo del usuario actual
-      favoritosData.forEach(fav => {
-        const userId = fav.usuario?.idUsr || fav.usuario?.id || fav.idUsuario || fav.idUsr;
-        if(currentUserId && userId && userId === currentUserId) {
-          const recetaId = fav.idReceta || fav.id_receta || fav.receta?.idReceta || fav.receta?.id;
-          if(recetaId) newFavoritos.add(recetaId);
-        }
+      
+      const favData = favRes?.data || favRes;
+      const likesData = likesRes?.data || likesRes;
+      const starsData = starsRes?.data || starsRes;
+      
+      const favList = Array.isArray(favData) ? favData : (Array.isArray(favData?.favoritos) ? favData.favoritos : []);
+      const likesList = Array.isArray(likesData) ? likesData : (Array.isArray(likesData?.likes) ? likesData.likes : []);
+      const starsList = Array.isArray(starsData) ? starsData : (Array.isArray(starsData?.estrellas) ? starsData.estrellas : []);
+      
+      const favSet = new Set(favList.map(f => f.idReceta || f.receta_id || f.receta?.idReceta || f.receta?.id));
+      const likesSet = new Set(likesList.map(l => l.idReceta || l.receta_id || l.receta?.idReceta || l.receta?.id));
+      
+      // Almacenar solo el valor de estrellas (simple)
+      const starsMap = new Map();
+      starsList.forEach(s => {
+        const recetaId = s.idReceta || s.receta_id || s.id_receta || s.receta?.idReceta || s.receta?.id;
+        const valor = s.estrellas || s.valor || s.valorEstrellas || s.value || 5;
+        if(recetaId) starsMap.set(recetaId, valor);
       });
-
-      // Procesar likes - filtrar solo del usuario actual
-      likesData.forEach(like => {
-        const userId = like.usuario?.idUsr || like.usuario?.id || like.idUsuario || like.idUsr;
-        if(currentUserId && userId && userId === currentUserId) {
-          const recetaId = like.idReceta || like.id_receta || like.receta?.idReceta || like.receta?.id;
-          if(recetaId) newLikes.add(recetaId);
-        }
-      });
-
-      // Procesar estrellas - filtrar solo del usuario actual
-      estrellasData.forEach(estrella => {
-        const userId = estrella.usuario?.idUsr || estrella.usuario?.id || estrella.idUsuario || estrella.idUsr;
-        if(currentUserId && userId && userId === currentUserId) {
-          const recetaId = estrella.idReceta || estrella.id_receta || estrella.receta?.idReceta || estrella.receta?.id;
-          const valor = estrella.estrellas || estrella.valorEstrellas || estrella.valor || 0;
-          if(recetaId) newEstrellas.set(recetaId, valor);
-        }
-      });
-
-      setUserInteractions({
-        likes: newLikes,
-        favoritos: newFavoritos,
-        estrellas: newEstrellas
-      });
-    } catch (err) {
-      console.error('Error cargando interacciones del usuario:', err);
+      
+      setUserInteractions({ favoritos: favSet, likes: likesSet, estrellas: starsMap });
+    } catch(e) {
+      // Error silencioso
     }
   };
 
-  const shortText = (text, n=140) => text ? (text.length>n? text.slice(0,n).trim()+'...': text) : '';
-
-  const [openReceta, setOpenReceta] = useState(false);
-  
   const handleLike = async (recetaId) => {
-    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
-    try{
-      const isLiked = userInteractions.likes.has(recetaId);
-      if(isLiked){
-        await deleteLikeReceta(recetaId);
-        setUserInteractions(prev => {
-          const newLikes = new Set(prev.likes);
-          newLikes.delete(recetaId);
-          return { ...prev, likes: newLikes };
-        });
-      }else{
-        await postLikeReceta(recetaId);
-        setUserInteractions(prev => {
-          const newLikes = new Set(prev.likes);
-          newLikes.add(recetaId);
-          return { ...prev, likes: newLikes };
-        });
-      }
-      // Recargar estadísticas del modal si está abierto
-      if(openReceta && (selectedReceta?.idReceta === recetaId || selectedReceta?.id === recetaId)) {
-        loadModalStats(recetaId);
-      }
-    }catch(e){ 
-      console.error('Error al dar like:', e);
-      // Si el error es "duplicate key" (400), significa que ya existe, hacer toggle
-      if(e?.response?.status === 400 && e?.response?.data?.mensaje?.includes('duplicate key')) {
-        // Ya existe, entonces lo eliminamos
-        try {
-          await deleteLikeReceta(recetaId);
-          setUserInteractions(prev => {
-            const newLikes = new Set(prev.likes);
-            newLikes.delete(recetaId);
-            return { ...prev, likes: newLikes };
-          });
-          // Recargar estadísticas del modal
-          if(openReceta && (selectedReceta?.idReceta === recetaId || selectedReceta?.id === recetaId)) {
-            loadModalStats(recetaId);
-          }
-        } catch(deleteErr) {
-          console.error('Error al eliminar like duplicado:', deleteErr);
-        }
-      }
+    if(!isAuthenticated()) {
+      setAuthPromptOpen(true);
+      return;
+    }
+    
+    const hasLike = userInteractions.likes.has(recetaId);
+    const newLikes = new Set(userInteractions.likes);
+    
+    if(hasLike) {
+      newLikes.delete(recetaId);
+      await deleteLikeReceta(recetaId).catch(()=>{});
+    } else {
+      newLikes.add(recetaId);
+      await postLikeReceta(recetaId).catch(()=>{});
+    }
+    
+    setUserInteractions(prev => ({ ...prev, likes: newLikes }));
+    
+    if(selectedReceta && (selectedReceta.idReceta === recetaId || selectedReceta.id === recetaId)) {
+      loadModalStats(recetaId);
     }
   };
 
   const handleFavorito = async (recetaId) => {
-    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
-    try{
-      const isFavorito = userInteractions.favoritos.has(recetaId);
-      if(isFavorito){
-        await deleteFavoritoReceta(recetaId);
-        setUserInteractions(prev => {
-          const newFavoritos = new Set(prev.favoritos);
-          newFavoritos.delete(recetaId);
-          return { ...prev, favoritos: newFavoritos };
-        });
-      }else{
-        await postFavoritoReceta(recetaId);
-        setUserInteractions(prev => {
-          const newFavoritos = new Set(prev.favoritos);
-          newFavoritos.add(recetaId);
-          return { ...prev, favoritos: newFavoritos };
-        });
-      }
-    }catch(e){ 
-      console.error('Error al marcar favorito:', e);
-      // Si el error es "duplicate key" (400), significa que ya existe, hacer toggle
-      if(e?.response?.status === 400 && e?.response?.data?.mensaje?.includes('duplicate key')) {
-        // Ya existe, entonces lo eliminamos
-        try {
-          await deleteFavoritoReceta(recetaId);
-          setUserInteractions(prev => {
-            const newFavoritos = new Set(prev.favoritos);
-            newFavoritos.delete(recetaId);
-            return { ...prev, favoritos: newFavoritos };
-          });
-        } catch(deleteErr) {
-          console.error('Error al eliminar favorito duplicado:', deleteErr);
-        }
-      }
+    if(!isAuthenticated()) {
+      setAuthPromptOpen(true);
+      return;
     }
+    
+    const hasFav = userInteractions.favoritos.has(recetaId);
+    const newFavs = new Set(userInteractions.favoritos);
+    
+    if(hasFav) {
+      newFavs.delete(recetaId);
+      await deleteFavoritoReceta(recetaId).catch(()=>{});
+    } else {
+      newFavs.add(recetaId);
+      await postFavoritoReceta(recetaId).catch(()=>{});
+    }
+    
+    setUserInteractions(prev => ({ ...prev, favoritos: newFavs }));
   };
 
-  const handleOpenRating = (recetaId, recetaNombre) => {
-    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
+  const handleOpenRating = (recetaId, nombre) => {
+    if(!isAuthenticated()) {
+      setAuthPromptOpen(true);
+      return;
+    }
     setRatingRecetaId(recetaId);
-    setRatingRecetaNombre(recetaNombre);
+    setRatingRecetaNombre(nombre);
     setRatingDialogOpen(true);
   };
 
-  const handleRate = async (valorEstrellas) => {
+  const handleRatingSubmit = async (valor) => {
     if(!ratingRecetaId) return;
-    try{
-      await postStarReceta(ratingRecetaId, valorEstrellas);
-      setUserInteractions(prev => {
-        const newEstrellas = new Map(prev.estrellas);
-        newEstrellas.set(ratingRecetaId, valorEstrellas);
-        return { ...prev, estrellas: newEstrellas };
-      });
-      // Recargar estadísticas del modal si está abierto
-      if(openReceta && (selectedReceta?.idReceta === ratingRecetaId || selectedReceta?.id === ratingRecetaId)) {
+    
+    try {
+      await postStarReceta(ratingRecetaId, valor);
+      const newStars = new Map(userInteractions.estrellas);
+      newStars.set(ratingRecetaId, valor);
+      setUserInteractions(prev => ({ ...prev, estrellas: newStars }));
+      
+      if(selectedReceta && (selectedReceta.idReceta === ratingRecetaId || selectedReceta.id === ratingRecetaId)) {
         loadModalStats(ratingRecetaId);
       }
-    }catch(e){ console.error('Error al calificar:', e); }
+      
+      if(sortByStars) {
+        loadAllRecetasStars(recetas);
+      }
+    } catch(e) {
+      // Error silencioso
+    }
   };
 
   const handleDeleteRating = async () => {
     if(!ratingRecetaId) return;
-    try{
-      // Obtener el ID de la estrella del usuario para esta receta
+    
+    try {
       const estrellaActual = userInteractions.estrellas.get(ratingRecetaId);
       if(estrellaActual) {
-        // Necesitamos el ID de la estrella, no el valor
-        // Por ahora, vamos a obtenerlo de getEstrellas
+        // Obtener todas las estrellas del usuario para encontrar el idEstrella
         const estrellasRes = await getEstrellas();
         const estrellasData = estrellasRes?.data || estrellasRes || [];
-        const miEstrella = estrellasData.find(e => 
-          (e.receta?.idReceta === ratingRecetaId || e.receta?.id === ratingRecetaId)
-        );
+        const starsList = Array.isArray(estrellasData) ? estrellasData : (Array.isArray(estrellasData?.estrellas) ? estrellasData.estrellas : []);
         
-        if(miEstrella && miEstrella.idEstrella) {
-          await deleteStarReceta(miEstrella.idEstrella);
-          setUserInteractions(prev => {
-            const newEstrellas = new Map(prev.estrellas);
-            newEstrellas.delete(ratingRecetaId);
-            return { ...prev, estrellas: newEstrellas };
-          });
-          // Recargar estadísticas del modal si está abierto
-          if(openReceta && (selectedReceta?.idReceta === ratingRecetaId || selectedReceta?.id === ratingRecetaId)) {
+        const miEstrella = starsList.find(e => {
+          const recetaId = e.idReceta || e.receta_id || e.id_receta || e.receta?.idReceta || e.receta?.id;
+          return recetaId === ratingRecetaId;
+        });
+        
+        if(miEstrella && (miEstrella.idEstrella || miEstrella.id)) {
+          await deleteStarReceta(miEstrella.idEstrella || miEstrella.id);
+          const newStars = new Map(userInteractions.estrellas);
+          newStars.delete(ratingRecetaId);
+          setUserInteractions(prev => ({ ...prev, estrellas: newStars }));
+          
+          if(selectedReceta && (selectedReceta.idReceta === ratingRecetaId || selectedReceta.id === ratingRecetaId)) {
             loadModalStats(ratingRecetaId);
+          }
+          
+          if(sortByStars) {
+            loadAllRecetasStars(recetas);
           }
         }
       }
-    }catch(e){ console.error('Error al eliminar calificación:', e); }
+    } catch(e) {
+      // Error silencioso
+    }
   };
-  
+
   const loadComentarios = async (recetaId) => {
-    if(!recetaId) return setComentarios([]);
-    try{
-      const r = await getComentariosReceta(recetaId);
-      const data = r && r.data ? r.data : r;
-      const list = Array.isArray(data) ? data : (Array.isArray(data?.comentarios) ? data.comentarios : (Array.isArray(data?.items) ? data.items : []));
+    if(!recetaId) return;
+    try {
+      const res = await getComentariosReceta(recetaId);
+      const data = res?.data || res;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.comentarios) ? data.comentarios : []);
       
       // Obtener nombres de usuarios para cada comentario
       const comentariosConNombres = await Promise.all(
@@ -369,7 +303,6 @@ export default function RecetasByCategoria(){
               nombreUsuario: nombreResponse?.data?.nombre || nombreResponse?.nombre || 'Usuario'
             };
           } catch (error) {
-            console.error('Error obteniendo nombre de usuario:', error);
             return {
               ...comentario,
               nombreUsuario: 'Usuario'
@@ -379,77 +312,52 @@ export default function RecetasByCategoria(){
       );
       
       setComentarios(comentariosConNombres);
-    }catch(e){ setComentarios([]); }
+    } catch(e) {
+      setComentarios([]);
+    }
   };
-  const [page, setPage] = useState(1);
-  const rows = 10;
-  const [search, setSearch] = useState('');
-  const theme = useTheme();
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
-  const isSm = useMediaQuery(theme.breakpoints.up('sm'));
-  const columns = isMd ? 4 : (isSm ? 2 : 1);
-  const perPage = rows * columns;
 
-  useEffect(()=>{
-    setPage(1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[columns]);
+  const handleEnviarComentario = async () => {
+    if(!isAuthenticated()) {
+      setAuthPromptOpen(true);
+      return;
+    }
+    
+    if(!newComentario.trim() || !selectedReceta) return;
+    
+    const recetaId = selectedReceta?.idReceta || selectedReceta?.id;
+    
+    try {
+      await postComentarioReceta(recetaId, newComentario);
+      setNewComentario('');
+      loadComentarios(recetaId);
+    } catch(e) {
+      // Error silencioso
+    }
+  };
 
+  // Filtros aplicados
   const filteredRecetas = recetas.filter(r => {
-    // Filtro por búsqueda del input principal
-    if(search && search.trim()) {
-      const s = search.trim().toLowerCase();
-      if(!(r.nombre || '').toString().toLowerCase().includes(s)) {
-        return false;
-      }
-    }
+    const matchSearch = search ? r.nombre?.toLowerCase().includes(search.toLowerCase()) : true;
+    const matchPais = selectedPais ? (r.idPais === selectedPais.idPais || r.pais_id === selectedPais.idPais) : true;
+    const matchNombre = searchNombre ? r.nombre?.toLowerCase().includes(searchNombre.toLowerCase()) : true;
     
-    // Filtro por búsqueda de nombre desde el drawer
-    if(searchNombre && searchNombre.trim()) {
-      const s = searchNombre.trim().toLowerCase();
-      if(!(r.nombre || '').toString().toLowerCase().includes(s)) {
-        return false;
-      }
-    }
-    
-    // Filtro por país
-    if(selectedPais) {
-      const recetaPaisId = r.idPais || r.id_pais || r.pais?.idPais || r.pais?.id;
-      const selectedPaisId = selectedPais.idPais || selectedPais.id;
-      if(recetaPaisId !== selectedPaisId) {
-        return false;
-      }
-    }
-    
-    // Filtro por rango de fechas
+    let matchFecha = true;
     if(fechaDesde || fechaHasta) {
-      const recetaFecha = r.fechaCreacion || r.fecha_creacion;
-      if(recetaFecha) {
-        // Convertir la fecha de la receta a formato Date
-        const fechaReceta = new Date(recetaFecha);
-        
-        if(fechaDesde) {
-          const desde = new Date(fechaDesde);
-          desde.setHours(0, 0, 0, 0);
-          if(fechaReceta < desde) {
-            return false;
-          }
-        }
-        
-        if(fechaHasta) {
-          const hasta = new Date(fechaHasta);
-          hasta.setHours(23, 59, 59, 999);
-          if(fechaReceta > hasta) {
-            return false;
-          }
-        }
+      const recetaFecha = new Date(r.fechaCreacion || r.fecha_creacion);
+      if(fechaDesde) {
+        const desde = new Date(fechaDesde);
+        if(recetaFecha < desde) matchFecha = false;
+      }
+      if(fechaHasta) {
+        const hasta = new Date(fechaHasta);
+        if(recetaFecha > hasta) matchFecha = false;
       }
     }
     
-    return true;
+    return matchSearch && matchPais && matchNombre && matchFecha;
   });
 
-  // Aplicar ordenamiento por estrellas
   const sortedRecetas = sortByStars ? [...filteredRecetas].sort((a, b) => {
     const recetaIdA = a.idReceta || a.id;
     const recetaIdB = b.idReceta || b.id;
@@ -457,9 +365,9 @@ export default function RecetasByCategoria(){
     const starsB = recetasWithStars.get(recetaIdB) || 0;
     
     if(sortByStars === 'asc') {
-      return starsA - starsB; // Menor a mayor
+      return starsA - starsB;
     } else if(sortByStars === 'desc') {
-      return starsB - starsA; // Mayor a menor
+      return starsB - starsA;
     }
     return 0;
   }) : filteredRecetas;
@@ -468,7 +376,6 @@ export default function RecetasByCategoria(){
     setSelectedReceta(receta);
     const recetaId = receta?.idReceta || receta?.id;
     
-    // Cargar comentarios y estadísticas en paralelo
     Promise.all([
       loadComentarios(recetaId),
       loadModalStats(recetaId)
@@ -504,16 +411,14 @@ export default function RecetasByCategoria(){
     }
   };
 
-  // Funciones para manejar filtros
   const handleApplyFilters = () => {
-    // Aplicar los filtros temporales a los filtros reales
     setSelectedPais(tempSelectedPais);
     setSearchNombre(tempSearchNombre);
     setSortByStars(tempSortByStars);
     setFechaDesde(tempFechaDesde);
     setFechaHasta(tempFechaHasta);
     setFilterDrawerOpen(false);
-    setPage(1); // Resetear a la primera página al aplicar filtros
+    setPage(1);
   };
 
   const handleResetFilters = () => {
@@ -531,7 +436,6 @@ export default function RecetasByCategoria(){
   };
   
   const handleOpenFilterDrawer = () => {
-    // Sincronizar los estados temporales con los actuales al abrir el drawer
     setTempSelectedPais(selectedPais);
     setTempSearchNombre(searchNombre);
     setTempSortByStars(sortByStars);
@@ -542,197 +446,617 @@ export default function RecetasByCategoria(){
 
   return (
     <Box>
-      <Box sx={{ backgroundColor: '#F6F0E0', py: 4 }}>
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)', 
+        py: { xs: 4, md: 6 }
+      }}>
         <Container>
           <Box textAlign="center">
-            <Typography variant="h2" sx={{ color: '#6b4f34', fontFamily: 'Lato, sans-serif', fontWeight: 700 }} id="nombreCategoria">
+            <Typography variant="h3" sx={{ 
+              color: 'white', 
+              fontFamily: 'Lato, sans-serif', 
+              fontWeight: 900,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+            }}>
               {cat ? cat.nombre : 'Categoría'}
             </Typography>
+            {cat && (
+              <Typography sx={{
+                color: 'white',
+                fontFamily: 'Open Sans, sans-serif',
+                fontWeight: 600,
+                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' },
+                mt: 1,
+                textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+              }}>
+                Descubre recetas de esta categoría
+              </Typography>
+            )}
           </Box>
         </Container>
       </Box>
 
-  <Container maxWidth="xl" sx={{ py: 4, px: 2, maxWidth: '1400px', mx: 'auto' }}>
-        {loading && <Typography>Loading...</Typography>}
-        {error && <Typography color="error">{error}</Typography>}
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start', gap: 2, alignItems: 'center' }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, px: 2, mx: 'auto' }}>
+        {loading && <Typography sx={{ textAlign: 'center', color: '#667EEA', fontFamily: 'Open Sans, sans-serif' }}>Cargando...</Typography>}
+        {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
+        
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button 
             variant="contained" 
             startIcon={<FilterListIcon />} 
             onClick={handleOpenFilterDrawer}
-            size="small"
-            sx={{ backgroundColor: '#F75442', '&:hover': { backgroundColor: '#d43f2f' } }}
+            size="medium"
+            sx={{ 
+              background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+              color: 'white',
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 700,
+              borderRadius: 50,
+              px: 3,
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+              '&:hover': { 
+                background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)',
+                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+                transform: 'translateY(-2px)'
+              },
+              transition: 'all 0.3s ease'
+            }}
           >
             Filtros
           </Button>
-          <TextField size="small" placeholder="Buscar en estas recetas..." value={search} onChange={(e)=>{ setSearch(e.target.value); setPage(1); }} sx={{ minWidth: 300 }} />
+          <TextField 
+            size="small" 
+            placeholder="Buscar en estas recetas..." 
+            value={search} 
+            onChange={(e)=>{ setSearch(e.target.value); setPage(1); }} 
+            sx={{ 
+              minWidth: 300,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 50,
+                backgroundColor: 'white'
+              }
+            }}
+          />
         </Box>
 
-        <Grid container spacing={2} id="recetas" justifyContent="center">
-          {recetas.length === 0 && !loading && <Grid item xs={12}><Typography>No se encontraron recetas para esta categoría.</Typography></Grid>}
-          {sortedRecetas.slice((page-1)*perPage, page*perPage).map(r => (
-            <Grid item key={r.idReceta || r.id} sx={{ width: { xs: '100%', sm: '48%', md: '23%' } }}>
-              <Box sx={{ border: '1px solid #eee', p: 2, borderRadius: 1, height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', width: '100%' }}>
-                <Box component="img" src={r.urlImagen || 'https://placehold.co/600x360'} alt={r.nombre} onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} sx={{ width: '100%', height: 120, maxHeight: 140, objectFit: 'cover', borderRadius: 1 }} />
-                <Typography sx={{ mt: 1, fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{r.nombre}</Typography>
-                <Typography color="text.secondary" sx={{ mt: 1, flexGrow: 1 }}>{shortText(r.preparacion, 100)}</Typography>
-                
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">{formatFecha(r.fechaCreacion)}</Typography>
-                  <Box>
-                    <IconButton size="small" onClick={() => handleLike(r.idReceta || r.id)} aria-label="like">
-                      {userInteractions.likes.has(r.idReceta || r.id) ? <ThumbUpIcon fontSize="small" color="primary" /> : <ThumbUpOutlinedIcon fontSize="small" />}
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleOpenRating(r.idReceta || r.id, r.nombre)} aria-label="star">
-                      {userInteractions.estrellas.has(r.idReceta || r.id) ? <StarIcon fontSize="small" color="warning" /> : <StarBorderIcon fontSize="small" />}
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleFavorito(r.idReceta || r.id)} aria-label="fav">
-                      {userInteractions.favoritos.has(r.idReceta || r.id) ? <BookmarkIcon fontSize="small" color="error" /> : <BookmarkBorderIcon fontSize="small" />}
-                    </IconButton>
-                    <Button onClick={() => handleOpenReceta(r)} size="small" sx={{ fontFamily: 'Open Sans, sans-serif' }}>Ver receta</Button>
-                  </Box>
-                </Box>
+        {/* SECCIÓN DE TARJETAS RECREADA DESDE CERO */}
+        <Grid container spacing={3} columns={12}>
+          {recetas.length === 0 && !loading && (
+            <Grid item xs={12}>
+              <Box sx={{
+                textAlign: 'center',
+                py: 6,
+                backgroundColor: '#F7FAFC',
+                borderRadius: 3
+              }}>
+                <Typography sx={{ 
+                  color: '#718096', 
+                  fontFamily: 'Open Sans, sans-serif', 
+                  fontSize: { xs: '1rem', md: '1.1rem' }
+                }}>
+                  No se encontraron recetas para esta categoría.
+                </Typography>
               </Box>
             </Grid>
-          ))}
+          )}
+          
+          {sortedRecetas.slice((page-1)*perPage, page*perPage).map(r => {
+            const recetaId = r.idReceta || r.id;
+            return (
+              <Grid 
+                item 
+                key={recetaId} 
+                xs={6}
+                sx={{
+                  maxWidth: 'calc(50% - 12px)',
+                  flexBasis: 'calc(50% - 12px)',
+                  flexGrow: 0,
+                  flexShrink: 0
+                }}
+              >
+                <Box sx={{ 
+                  backgroundColor: 'white',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  width: '100%',
+                  height: 520,
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)'
+                  }
+                }}>
+                  {/* CONTENEDOR DE IMAGEN */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: 300,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    backgroundColor: '#f5f5f5',
+                    position: 'relative'
+                  }}>
+                    <Box 
+                      component="img" 
+                      src={r.urlImagen || 'https://placehold.co/600x360'} 
+                      alt={r.nombre} 
+                      onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }} 
+                    />
+                  </Box>
+                  
+                  {/* CONTENIDO DE LA TARJETA */}
+                  <Box sx={{ 
+                    p: 2.5, 
+                    flexGrow: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    justifyContent: 'space-between' 
+                  }}>
+                    <Typography sx={{ 
+                      fontFamily: 'Lato, sans-serif', 
+                      fontWeight: 900,
+                      color: '#1A202C',
+                      fontSize: '1.1rem',
+                      mb: 2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      minHeight: '2.6em'
+                    }}>
+                      {r.nombre}
+                    </Typography>
+                    
+                    <Box>
+                      <Typography variant="caption" sx={{ 
+                        color: '#969696', 
+                        fontFamily: 'Open Sans, sans-serif',
+                        display: 'block',
+                        mb: 1
+                      }}>
+                        {formatFecha(r.fechaCreacion)}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-start' }}>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleLike(recetaId)} 
+                          aria-label="like"
+                          sx={{
+                            backgroundColor: userInteractions.likes.has(recetaId) ? '#4299E1' : '#F7FAFC',
+                            color: userInteractions.likes.has(recetaId) ? 'white' : '#4299E1',
+                            '&:hover': {
+                              backgroundColor: '#4299E1',
+                              color: 'white'
+                            }
+                          }}
+                        >
+                          {userInteractions.likes.has(recetaId) ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleOpenRating(recetaId, r.nombre)} 
+                          aria-label="star"
+                          sx={{
+                            backgroundColor: userInteractions.estrellas.has(recetaId) ? '#ED8936' : '#F7FAFC',
+                            color: userInteractions.estrellas.has(recetaId) ? 'white' : '#ED8936',
+                            '&:hover': {
+                              backgroundColor: '#ED8936',
+                              color: 'white'
+                            }
+                          }}
+                        >
+                          {userInteractions.estrellas.has(recetaId) ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleFavorito(recetaId)} 
+                          aria-label="fav"
+                          sx={{
+                            backgroundColor: userInteractions.favoritos.has(recetaId) ? '#F56565' : '#F7FAFC',
+                            color: userInteractions.favoritos.has(recetaId) ? 'white' : '#F56565',
+                            '&:hover': {
+                              backgroundColor: '#F56565',
+                              color: 'white'
+                            }
+                          }}
+                        >
+                          {userInteractions.favoritos.has(recetaId) ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
+                        </IconButton>
+                      </Box>
+                    </Box>
+                    
+                    <Button 
+                      onClick={() => handleOpenReceta(r)} 
+                      fullWidth
+                      variant="contained"
+                      sx={{
+                        mt: 2,
+                        background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                        color: 'white',
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontWeight: 700,
+                        borderRadius: 50,
+                        py: { xs: 0.8, sm: 1 },
+                        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(240, 147, 251, 0.4)'
+                        },
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Ver receta
+                    </Button>
+                  </Box>
+                </Box>
+              </Grid>
+            );
+          })}
         </Grid>
 
         {sortedRecetas.length > perPage && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Pagination count={Math.ceil(sortedRecetas.length / perPage)} page={page} onChange={(e, value) => setPage(value)} color="primary" />
+            <Pagination 
+              count={Math.ceil(sortedRecetas.length / perPage)} 
+              page={page} 
+              onChange={(e, value) => setPage(value)} 
+              color="primary" 
+            />
           </Box>
         )}
 
+        {/* MODAL DE RECETA */}
         <Dialog open={openReceta} onClose={handleCloseReceta} fullWidth maxWidth="md">
-            <DialogTitle sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{selectedReceta?.nombre}</DialogTitle>
-          <DialogContent dividers>
-            <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} sx={{ width: '100%', height: 360, maxHeight: 480, objectFit: 'cover', borderRadius: 1 }} />
-            <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Ingredientes</Typography>
-            <Box component="ul" sx={{ pl: 2, mt: 1, mb: 2 }}>
-              {(selectedReceta?.ingredientes || []).map(ingrediente => 
-                ingrediente.nombre.split('\n').filter(line => line.trim()).map((line, idx) => (
-                  <Box component="li" key={`${ingrediente.idIngrediente}-${idx}`} sx={{ listStyleType: 'disc', ml: 1, fontSize: '0.95rem', color: 'text.secondary', mb: 0.5 }}>
-                    {line.trim()}
+          <DialogTitle sx={{ 
+            fontFamily: 'Lato, sans-serif', 
+            fontWeight: 900,
+            color: '#1A202C',
+            fontSize: { xs: '1.5rem', md: '1.75rem' },
+            borderBottom: '3px solid rgba(102, 126, 234, 0.3)',
+            pb: 2
+          }}>
+            {selectedReceta?.nombre}
+            {isAdmin() && (
+              <Typography component="span" sx={{ 
+                ml: 2, 
+                fontSize: '0.9rem', 
+                color: '#718096',
+                fontWeight: 400
+              }}>
+                (ID: {selectedReceta?.idReceta || selectedReceta?.id})
+              </Typography>
+            )}
+          </DialogTitle>
+          <DialogContent dividers sx={{ p: { xs: 2, md: 3 } }}>
+            <Box 
+              component="img" 
+              src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} 
+              alt={selectedReceta?.nombre} 
+              onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} 
+              sx={{ 
+                width: '100%', 
+                height: { xs: 240, md: 360 },
+                objectFit: 'cover',
+                borderRadius: 3,
+                mb: 3,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }} 
+            />
+            
+            <Typography variant="h6" sx={{ 
+              fontFamily: 'Roboto, sans-serif', 
+              fontWeight: 900,
+              color: '#99682E',
+              mb: 2,
+              fontSize: '1.25rem'
+            }}>
+              Ingredientes
+            </Typography>
+            <Typography sx={{ 
+              fontFamily: 'Open Sans, sans-serif', 
+              color: '#969696',
+              mb: 3,
+              fontSize: '1rem',
+              lineHeight: 1.7,
+              whiteSpace: 'pre-wrap'
+            }}>
+              {selectedReceta?.ingredientes 
+                ? (Array.isArray(selectedReceta.ingredientes) 
+                    ? selectedReceta.ingredientes.map(ing => typeof ing === 'string' ? ing : ing.nombre).join(', ')
+                    : selectedReceta.ingredientes)
+                : 'No disponible'}
+            </Typography>
+            
+            <Divider sx={{ my: 3 }} />
+            
+            <Typography variant="h6" sx={{ 
+              fontFamily: 'Roboto, sans-serif', 
+              fontWeight: 900,
+              color: '#99682E',
+              mb: 2,
+              fontSize: '1.25rem'
+            }}>
+              Preparación
+            </Typography>
+            <Typography sx={{ 
+              fontFamily: 'Open Sans, sans-serif', 
+              color: '#969696',
+              mb: 3,
+              fontSize: '1rem',
+              lineHeight: 1.7,
+              whiteSpace: 'pre-wrap'
+            }}>
+              {selectedReceta?.preparacion || 'No disponible'}
+            </Typography>
+            
+            <Divider sx={{ my: 3 }} />
+            
+            <Box sx={{ 
+              backgroundColor: '#F9E9AE',
+              borderRadius: 3,
+              p: 2.5,
+              mb: 3
+            }}>
+              {/* Botones de interacción con estadísticas */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                flexWrap: 'wrap', 
+                gap: 2,
+                backgroundColor: '#F9E9AE',
+                borderRadius: 2,
+                p: 2
+              }}>
+                {/* Botones e interacciones de izquierda */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {/* Botón Me Gusta con contador */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <IconButton 
+                      aria-label="like" 
+                      onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}
+                      sx={{
+                        backgroundColor: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                        color: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                        '&:hover': {
+                          backgroundColor: '#FA968B',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
+                    </IconButton>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
+                      {modalStats.likesCount}
+                    </Typography>
                   </Box>
-                ))
-              )}
-            </Box>
-            <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Preparación</Typography>
-            <Typography sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}>{selectedReceta?.preparacion}</Typography>
-            <Divider sx={{ my: 2 }} />
-            
-            {/* Botones de interacción con estadísticas */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-              {/* Botones e interacciones de izquierda */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {/* Botón Me Gusta con contador */}
-                <IconButton aria-label="like" onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}>
-                  {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon color="primary" /> : <ThumbUpOutlinedIcon />}
-                </IconButton>
-                <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>
-                  {modalStats.likesCount}
-                </Typography>
+                  
+                  {/* Botón Estrellas con promedio */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <IconButton 
+                      aria-label="star" 
+                      onClick={() => handleOpenRating(selectedReceta?.idReceta || selectedReceta?.id, selectedReceta?.nombre)}
+                      sx={{
+                        backgroundColor: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#99682E' : 'white',
+                        color: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#99682E',
+                        '&:hover': {
+                          backgroundColor: '#99682E',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon /> : <StarBorderIcon />}
+                    </IconButton>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
+                      {modalStats.avgStars > 0 ? modalStats.avgStars.toFixed(1) : '0.0'}
+                      <Typography component="span" variant="body2" sx={{ ml: 0.5, color: '#969696', fontWeight: 400 }}>
+                        ({modalStats.totalStars})
+                      </Typography>
+                    </Typography>
+                  </Box>
+                </Box>
                 
-                {/* Botón Estrellas con promedio */}
-                <IconButton aria-label="star" onClick={() => handleOpenRating(selectedReceta?.idReceta || selectedReceta?.id, selectedReceta?.nombre)}>
-                  {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon color="warning" /> : <StarBorderIcon />}
+                {/* Botón Favorito a la derecha */}
+                <IconButton 
+                  aria-label="fav" 
+                  onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}
+                  sx={{
+                    backgroundColor: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                    color: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                    '&:hover': {
+                      backgroundColor: '#FA968B',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon /> : <BookmarkBorderIcon />}
                 </IconButton>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {modalStats.avgStars > 0 ? modalStats.avgStars.toFixed(1) : '0.0'}
-                  <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontWeight: 400 }}>
-                    ({modalStats.totalStars})
-                  </Typography>
-                </Typography>
               </Box>
-              
-              {/* Botón Favorito a la derecha */}
-              <IconButton aria-label="fav" onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}>
-                {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon color="error" /> : <BookmarkBorderIcon />}
-              </IconButton>
             </Box>
             
-            <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
-            <List>
-              {(comentarios || []).map(c => (
-                <ListItem key={c.idComentario || c.id}><ListItemText primary={c.nombreUsuario || 'Usuario'} secondary={c.texto || c.comentario} /></ListItem>
-              ))}
-            </List>
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <TextField size="small" fullWidth placeholder="Escribe un comentario..." value={newComentario} onChange={(e)=> setNewComentario(e.target.value)} />
-              <Button size="small" variant="contained" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } if(!newComentario || !newComentario.trim()) return; try{ await postComentarioReceta(selectedReceta?.idReceta || selectedReceta?.id, newComentario); setNewComentario(''); await loadComentarios(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}>Enviar</Button>
+            <Divider sx={{ my: 3 }} />
+            
+            <Typography variant="h6" sx={{ 
+              fontFamily: 'Roboto, sans-serif', 
+              fontWeight: 900,
+              color: '#99682E',
+              mb: 2,
+              fontSize: '1.25rem'
+            }}>
+              Comentarios
+            </Typography>
+            
+            {comentarios.length === 0 ? (
+              <Typography sx={{ 
+                fontFamily: 'Open Sans, sans-serif', 
+                color: '#969696',
+                fontStyle: 'italic',
+                mb: 2
+              }}>
+                No hay comentarios aún. ¡Sé el primero en comentar!
+              </Typography>
+            ) : (
+              <List sx={{ mb: 2 }}>
+                {comentarios.map((c, idx) => (
+                  <ListItem 
+                    key={idx} 
+                    sx={{ 
+                      backgroundColor: '#F9E9AE',
+                      borderRadius: 2,
+                      mb: 1,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Typography sx={{ 
+                          fontFamily: 'Open Sans, sans-serif', 
+                          fontWeight: 700,
+                          color: '#1A202C',
+                          fontSize: '0.95rem'
+                        }}>
+                          {c.nombreUsuario || 'Usuario'}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography sx={{ 
+                          fontFamily: 'Open Sans, sans-serif', 
+                          color: '#4A5568',
+                          fontSize: '0.9rem',
+                          mt: 0.5
+                        }}>
+                          {c.comentario || c.texto}
+                        </Typography>
+                      }
+                    />
+                    <Typography variant="caption" sx={{ 
+                      color: '#718096',
+                      fontFamily: 'Open Sans, sans-serif',
+                      mt: 0.5
+                    }}>
+                      {formatFecha(c.fechaCreacion || c.fecha)}
+                    </Typography>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+            
+            <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Escribe un comentario..."
+                value={newComentario}
+                onChange={(e) => setNewComentario(e.target.value)}
+                onKeyPress={(e) => { if(e.key === 'Enter') handleEnviarComentario(); }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 50,
+                    borderColor: '#F75442',
+                    fontFamily: 'Open Sans, sans-serif'
+                  }
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleEnviarComentario}
+                sx={{
+                  borderRadius: 50,
+                  background: 'linear-gradient(135deg, #F75442 0%, #FA968B 100%)',
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontWeight: 700,
+                  px: 3,
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FA968B 0%, #F75442 100%)'
+                  }
+                }}
+              >
+                Enviar
+              </Button>
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseReceta}>Cerrar</Button>
+            <Button onClick={handleCloseReceta} sx={{ 
+              color: '#667EEA',
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 700
+            }}>
+              Cerrar
+            </Button>
           </DialogActions>
         </Dialog>
-        <AuthPromptDialog open={authPromptOpen} onClose={()=> setAuthPromptOpen(false)} />
-        <RatingDialog 
-          open={ratingDialogOpen} 
-          onClose={() => setRatingDialogOpen(false)} 
-          onRate={handleRate}
-          onDelete={handleDeleteRating}
-          recetaNombre={ratingRecetaNombre}
-          hasRating={userInteractions.estrellas.has(ratingRecetaId)}
-        />
 
-        {/* Drawer de filtros */}
+        {/* DRAWER DE FILTROS */}
         <Drawer
           anchor="right"
           open={filterDrawerOpen}
           onClose={() => setFilterDrawerOpen(false)}
         >
-          <Box sx={{ width: 300, p: 3 }}>
+          <Box sx={{ width: 320, p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>
                 Filtros
               </Typography>
-              <IconButton size="small" onClick={() => setFilterDrawerOpen(false)}>
+              <IconButton onClick={() => setFilterDrawerOpen(false)}>
                 <CloseIcon />
               </IconButton>
             </Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            {/* Filtro por nombre */}
+            
+            <Typography variant="subtitle2" sx={{ mb: 1, fontFamily: 'Open Sans, sans-serif', fontWeight: 700 }}>
+              Buscar por nombre
+            </Typography>
             <TextField
-              label="Buscar por nombre"
-              size="small"
               fullWidth
+              size="small"
+              placeholder="Nombre de receta..."
               value={tempSearchNombre}
               onChange={(e) => setTempSearchNombre(e.target.value)}
               sx={{ mb: 2 }}
-              placeholder="Nombre de la receta..."
             />
-
-            {/* Filtro por País */}
+            
+            <Typography variant="subtitle2" sx={{ mb: 1, fontFamily: 'Open Sans, sans-serif', fontWeight: 700 }}>
+              Filtrar por país
+            </Typography>
             <Autocomplete
+              size="small"
               options={paises}
               getOptionLabel={(option) => option.nombre || ''}
               value={tempSelectedPais}
-              onChange={(event, newValue) => setTempSelectedPais(newValue)}
-              renderInput={(params) => (
-                <TextField {...params} label="País" size="small" />
-              )}
+              onChange={(e, newValue) => setTempSelectedPais(newValue)}
+              renderInput={(params) => <TextField {...params} placeholder="Selecciona un país" />}
               sx={{ mb: 2 }}
             />
-
-            {/* Ordenar por estrellas */}
+            
+            <Typography variant="subtitle2" sx={{ mb: 1, fontFamily: 'Open Sans, sans-serif', fontWeight: 700 }}>
+              Ordenar por estrellas
+            </Typography>
             <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-              <InputLabel>Ordenar por estrellas</InputLabel>
               <Select
                 value={tempSortByStars}
-                label="Ordenar por estrellas"
                 onChange={(e) => setTempSortByStars(e.target.value)}
+                displayEmpty
               >
-                <MenuItem value="">Sin ordenar</MenuItem>
-                <MenuItem value="asc">Menor a mayor ⭐</MenuItem>
-                <MenuItem value="desc">Mayor a menor ⭐</MenuItem>
+                <MenuItem value="">Sin orden</MenuItem>
+                <MenuItem value="desc">Mayor a menor</MenuItem>
+                <MenuItem value="asc">Menor a mayor</MenuItem>
               </Select>
             </FormControl>
-
-            {/* Filtro por rango de fechas */}
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'text.secondary' }}>
+            
+            <Typography variant="subtitle2" sx={{ mb: 1, fontFamily: 'Open Sans, sans-serif', fontWeight: 700 }}>
               Filtrar por fecha
             </Typography>
             
@@ -780,6 +1104,20 @@ export default function RecetasByCategoria(){
             </Box>
           </Box>
         </Drawer>
+
+        <AuthPromptDialog 
+          open={authPromptOpen} 
+          onClose={() => setAuthPromptOpen(false)} 
+        />
+
+        <RatingDialog
+          open={ratingDialogOpen}
+          onClose={() => setRatingDialogOpen(false)}
+          onRate={handleRatingSubmit}
+          onDelete={handleDeleteRating}
+          recetaNombre={ratingRecetaNombre}
+          hasRating={ratingRecetaId ? userInteractions.estrellas.has(ratingRecetaId) : false}
+        />
       </Container>
     </Box>
   );

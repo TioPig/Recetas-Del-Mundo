@@ -220,25 +220,25 @@ export default function Ajustes() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#F7FAFC' }}>
       {/* Hero Section */}
       <Box 
         sx={{ 
-          backgroundColor: '#F6F0E0',
-          py: { xs: 3, sm: 4, md: 5 },
-          borderBottom: '3px solid #F75442'
+          background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+          py: { xs: 4, sm: 5, md: 6 },
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
         }}
       >
         <Container maxWidth="lg">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-            <SettingsIcon sx={{ fontSize: { xs: 32, sm: 40, md: 48 }, color: '#F75442' }} />
+            <SettingsIcon sx={{ fontSize: { xs: 36, sm: 44, md: 52 }, color: 'white' }} />
             <Typography 
               variant="h3" 
               component="h1"
               sx={{ 
                 fontFamily: 'Lato, sans-serif', 
-                fontWeight: 700,
-                color: '#6b4f34',
+                fontWeight: 900,
+                color: 'white',
                 fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                 textAlign: 'center'
               }}
@@ -249,7 +249,7 @@ export default function Ajustes() {
         </Container>
       </Box>
 
-      <Container maxWidth="md" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
         {error && (
           <Alert 
             severity="error" 
@@ -262,33 +262,50 @@ export default function Ajustes() {
 
         <Snackbar
           open={success}
-          autoHideDuration={6000}
+          autoHideDuration={3000}
           onClose={() => setSuccess(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert severity="success" sx={{ width: '100%' }}>
+          <Alert 
+            severity="success" 
+            variant="filled"
+            sx={{ 
+              width: '100%',
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 600
+            }}
+          >
             ¡Datos actualizados exitosamente!
           </Alert>
         </Snackbar>
 
         {/* Información Personal */}
-        <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: { xs: 2.5, sm: 3.5 }, 
+            mb: { xs: 2, sm: 3 }, 
+            borderRadius: 3,
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)'
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <PersonIcon sx={{ mr: 1, color: '#F75442', fontSize: { xs: 20, sm: 24 } }} />
+            <PersonIcon sx={{ mr: 1.5, color: '#667EEA', fontSize: { xs: 24, sm: 28 } }} />
             <Typography 
               variant="h6" 
               sx={{ 
                 fontFamily: 'Lato, sans-serif', 
-                fontWeight: 600,
-                color: '#6b4f34',
-                fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                fontWeight: 900,
+                color: '#1A202C',
+                fontSize: { xs: '1.2rem', sm: '1.35rem' }
               }}
             >
               Información Personal
             </Typography>
           </Box>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -299,12 +316,16 @@ export default function Ajustes() {
                   variant="outlined"
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: 'Open Sans, sans-serif',
                       '&.Mui-focused fieldset': {
-                        borderColor: '#F75442',
+                        borderColor: '#667EEA',
                       },
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#F75442',
+                      color: '#667EEA',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600
                     },
                   }}
                 />
@@ -320,12 +341,16 @@ export default function Ajustes() {
                   variant="outlined"
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: 'Open Sans, sans-serif',
                       '&.Mui-focused fieldset': {
-                        borderColor: '#F75442',
+                        borderColor: '#667EEA',
                       },
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#F75442',
+                      color: '#667EEA',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600
                     },
                   }}
                 />
@@ -341,23 +366,27 @@ export default function Ajustes() {
                   required
                   variant="outlined"
                   InputProps={{
-                    startAdornment: <EmailIcon sx={{ mr: 1, color: '#666' }} />,
+                    startAdornment: <EmailIcon sx={{ mr: 1, color: '#718096' }} />,
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: 'Open Sans, sans-serif',
                       '&.Mui-focused fieldset': {
-                        borderColor: '#F75442',
+                        borderColor: '#667EEA',
                       },
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#F75442',
+                      color: '#667EEA',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600
                     },
                   }}
                 />
               </Grid>
             </Grid>
 
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3, borderColor: '#E2E8F0' }} />
 
             {/* Botón para actualizar información personal */}
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
@@ -367,13 +396,24 @@ export default function Ajustes() {
                 startIcon={<SaveIcon />}
                 onClick={handleUpdatePersonalInfo}
                 sx={{
-                  backgroundColor: '#F75442',
+                  background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                  color: 'white',
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontWeight: 700,
+                  borderRadius: 50,
                   px: { xs: 3, sm: 4 },
-                  py: 1,
+                  py: 1.2,
                   fontSize: { xs: '0.9rem', sm: '1rem' },
                   '&:hover': {
-                    backgroundColor: '#d64032'
-                  }
+                    background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(240, 147, 251, 0.4)'
+                  },
+                  '&.Mui-disabled': {
+                    background: '#E2E8F0',
+                    color: '#A0AEC0'
+                  },
+                  transition: 'all 0.3s ease'
                 }}
               >
                 {loading ? 'Guardando...' : 'Actualizar Información'}
@@ -382,16 +422,25 @@ export default function Ajustes() {
           </Paper>
 
           {/* Cambiar Contraseña */}
-          <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: { xs: 2.5, sm: 3.5 }, 
+              mb: { xs: 2, sm: 3 }, 
+              borderRadius: 3,
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.08)'
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <LockIcon sx={{ mr: 1, color: '#F75442', fontSize: { xs: 20, sm: 24 } }} />
+              <LockIcon sx={{ mr: 1.5, color: '#667EEA', fontSize: { xs: 24, sm: 28 } }} />
               <Typography 
                 variant="h6" 
                 sx={{ 
                   fontFamily: 'Lato, sans-serif', 
-                  fontWeight: 600,
-                  color: '#6b4f34',
-                  fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                  fontWeight: 900,
+                  color: '#1A202C',
+                  fontSize: { xs: '1.2rem', sm: '1.35rem' }
                 }}
               >
                 Cambiar Contraseña
@@ -400,12 +449,17 @@ export default function Ajustes() {
 
             <Typography 
               variant="body2" 
-              sx={{ mb: 2, color: '#666', fontSize: { xs: '0.875rem', sm: '0.95rem' } }}
+              sx={{ 
+                mb: 2.5, 
+                color: '#718096', 
+                fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                fontFamily: 'Open Sans, sans-serif'
+              }}
             >
               Completa todos los campos para cambiar tu contraseña
             </Typography>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -428,12 +482,16 @@ export default function Ajustes() {
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: 'Open Sans, sans-serif',
                       '&.Mui-focused fieldset': {
-                        borderColor: '#F75442',
+                        borderColor: '#667EEA',
                       },
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#F75442',
+                      color: '#667EEA',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600
                     },
                   }}
                 />
@@ -462,12 +520,16 @@ export default function Ajustes() {
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: 'Open Sans, sans-serif',
                       '&.Mui-focused fieldset': {
-                        borderColor: '#F75442',
+                        borderColor: '#667EEA',
                       },
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#F75442',
+                      color: '#667EEA',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600
                     },
                   }}
                 />
@@ -495,19 +557,23 @@ export default function Ajustes() {
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontFamily: 'Open Sans, sans-serif',
                       '&.Mui-focused fieldset': {
-                        borderColor: '#F75442',
+                        borderColor: '#667EEA',
                       },
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#F75442',
+                      color: '#667EEA',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600
                     },
                   }}
                 />
               </Grid>
             </Grid>
 
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3, borderColor: '#E2E8F0' }} />
 
             {/* Botón para actualizar contraseña */}
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
@@ -517,13 +583,24 @@ export default function Ajustes() {
                 startIcon={<LockIcon />}
                 onClick={handleUpdatePassword}
                 sx={{
-                  backgroundColor: '#F75442',
+                  background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                  color: 'white',
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontWeight: 700,
+                  borderRadius: 50,
                   px: { xs: 3, sm: 4 },
-                  py: 1,
+                  py: 1.2,
                   fontSize: { xs: '0.9rem', sm: '1rem' },
                   '&:hover': {
-                    backgroundColor: '#d64032'
-                  }
+                    background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(240, 147, 251, 0.4)'
+                  },
+                  '&.Mui-disabled': {
+                    background: '#E2E8F0',
+                    color: '#A0AEC0'
+                  },
+                  transition: 'all 0.3s ease'
                 }}
               >
                 {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
@@ -532,20 +609,25 @@ export default function Ajustes() {
           </Paper>
 
           {/* Botón Volver */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Button
               variant="outlined"
               onClick={handleCancel}
               sx={{
-                color: '#6b4f34',
-                borderColor: '#6b4f34',
+                color: '#667EEA',
+                borderColor: '#667EEA',
+                fontFamily: 'Open Sans, sans-serif',
+                fontWeight: 600,
+                borderRadius: 50,
                 px: { xs: 4, sm: 5 },
                 py: 1.5,
                 fontSize: { xs: '0.9rem', sm: '1rem' },
                 '&:hover': {
-                  borderColor: '#6b4f34',
-                  backgroundColor: 'rgba(107, 79, 52, 0.04)'
-                }
+                  borderColor: '#764BA2',
+                  backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
               }}
             >
               Volver al Inicio

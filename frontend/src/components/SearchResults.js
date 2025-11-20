@@ -32,7 +32,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import { searchRecetasByNombre, postLikeReceta, deleteLikeReceta, postStarReceta, deleteStarReceta, postFavoritoReceta, deleteFavoritoReceta, getComentariosReceta, postComentarioReceta, isAuthenticated, getMeGustaCount, getEstrellaStats, getMeGustas, getEstrellas, getFavoritos, getPaises, getCategorias, formatFecha, getUserNombre } from '../api';
+import { searchRecetasByNombre, postLikeReceta, deleteLikeReceta, postStarReceta, deleteStarReceta, postFavoritoReceta, deleteFavoritoReceta, getComentariosReceta, postComentarioReceta, isAuthenticated, getMeGustaCount, getEstrellaStats, getMeGustas, getEstrellas, getFavoritos, getPaises, getCategorias, formatFecha, getUserNombre, isAdmin } from '../api';
 import AuthPromptDialog from './AuthPromptDialog';
 import RatingDialog from './RatingDialog';
 import { useTheme } from '@mui/material/styles';
@@ -66,12 +66,12 @@ export default function SearchResults(){
 
   // pagination by rows
   const [page, setPage] = useState(1);
-  const rows = 10;
+  const rows = 10; // 10 filas
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const isSm = useMediaQuery(theme.breakpoints.up('sm'));
-  const columns = isMd ? 4 : (isSm ? 2 : 1);
-  const perPage = rows * columns;
+  const columns = isMd ? 2 : (isSm ? 2 : 1); // 2 columnas en tablet/desktop, 1 en móvil
+  const perPage = rows * columns; // 20 recetas en tablet/desktop, 10 en móvil
 
   useEffect(()=>{ setPage(1); },[columns, q]);
 
@@ -84,6 +84,8 @@ export default function SearchResults(){
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [userInteractions, setUserInteractions] = useState({ likes: new Set(), favoritos: new Set(), estrellas: new Map() });
   const [modalStats, setModalStats] = useState({ likesCount: 0, avgStars: 0, totalStars: 0 });
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [currentRatingRecetaId, setCurrentRatingRecetaId] = useState(null);
 
   // Estados para filtros
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -307,17 +309,59 @@ export default function SearchResults(){
 
   const handleStar = async (recetaId) => {
     if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
-    try{
-      await postStarReceta(recetaId);
+    setCurrentRatingRecetaId(recetaId);
+    setRatingDialogOpen(true);
+  };
+
+  const handleOpenRating = (recetaId) => {
+    if(!isAuthenticated()){ setAuthPromptOpen(true); return; }
+    setCurrentRatingRecetaId(recetaId);
+    setRatingDialogOpen(true);
+  };
+
+  const handleRateSubmit = async (rating) => {
+    if (!currentRatingRecetaId) return;
+    try {
+      await postStarReceta(currentRatingRecetaId, rating);
       setUserInteractions(prev => {
         const newEstrellas = new Map(prev.estrellas);
-        newEstrellas.set(recetaId, 5);
+        newEstrellas.set(currentRatingRecetaId, rating);
         return { ...prev, estrellas: newEstrellas };
       });
-      if(openReceta && (selectedReceta?.idReceta === recetaId || selectedReceta?.id === recetaId)) {
-        loadModalStats(recetaId);
+      if(openReceta && (selectedReceta?.idReceta === currentRatingRecetaId || selectedReceta?.id === currentRatingRecetaId)) {
+        loadModalStats(currentRatingRecetaId);
       }
-    }catch(e){}
+    } catch(e) {}
+  };
+
+  const handleDeleteRating = async () => {
+    if (!currentRatingRecetaId) return;
+    try {
+      const estrellaActual = userInteractions.estrellas.get(currentRatingRecetaId);
+      if(estrellaActual) {
+        // Obtener todas las estrellas del usuario para encontrar el idEstrella
+        const estrellasRes = await getEstrellas();
+        const estrellasData = estrellasRes?.data || estrellasRes || [];
+        const starsList = Array.isArray(estrellasData) ? estrellasData : (Array.isArray(estrellasData?.estrellas) ? estrellasData.estrellas : []);
+        
+        const miEstrella = starsList.find(e => {
+          const recetaId = e.idReceta || e.receta_id || e.id_receta || e.receta?.idReceta || e.receta?.id;
+          return recetaId === currentRatingRecetaId;
+        });
+        
+        if(miEstrella && (miEstrella.idEstrella || miEstrella.id)) {
+          await deleteStarReceta(miEstrella.idEstrella || miEstrella.id);
+          setUserInteractions(prev => {
+            const newEstrellas = new Map(prev.estrellas);
+            newEstrellas.delete(currentRatingRecetaId);
+            return { ...prev, estrellas: newEstrellas };
+          });
+          if(openReceta && (selectedReceta?.idReceta === currentRatingRecetaId || selectedReceta?.id === currentRatingRecetaId)) {
+            loadModalStats(currentRatingRecetaId);
+          }
+        }
+      }
+    } catch(e) {}
   };
 
   const handleOpenReceta = async (receta) => { 
@@ -436,58 +480,248 @@ export default function SearchResults(){
 
   return (
     <Box>
-      <Box sx={{ backgroundColor: '#F6F0E0', py: 4 }}>
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+        py: { xs: 4, md: 6 }
+      }}>
         <Container>
           <Box textAlign="center">
-            <Typography variant="h2" sx={{ color: '#6b4f34', fontFamily: 'Lato, sans-serif', fontWeight: 700 }} id="nombreBusqueda">
-              Resultados de búsqueda: "{q}"
+            <Typography variant="h3" sx={{ 
+              color: 'white', 
+              fontFamily: 'Lato, sans-serif', 
+              fontWeight: 900,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+            }} id="nombreBusqueda">
+              Resultados de búsqueda
+            </Typography>
+            <Typography sx={{
+              color: 'white',
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 600,
+              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
+              mt: 1,
+              textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+            }}>
+              "{q}"
             </Typography>
           </Box>
         </Container>
       </Box>
-  <Container maxWidth="xl" sx={{ py: 4, px: 2, maxWidth: '1400px', mx: 'auto' }}>
-        {loading && <Typography>Buscando...</Typography>}
-        {error && <Typography color="error">{error}</Typography>}
+  <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, px: 2, mx: 'auto' }}>
+        {loading && <Typography sx={{ textAlign: 'center', color: '#667EEA', fontFamily: 'Open Sans, sans-serif' }}>Buscando...</Typography>}
+        {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
 
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button 
             variant="contained" 
             startIcon={<FilterListIcon />} 
             onClick={handleOpenFilterDrawer}
-            size="small"
-            sx={{ backgroundColor: '#F75442', '&:hover': { backgroundColor: '#d43f2f' } }}
+            size="medium"
+            sx={{ 
+              background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+              color: 'white',
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 700,
+              borderRadius: 50,
+              px: 3,
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+              '&:hover': { 
+                background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)',
+                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+                transform: 'translateY(-2px)'
+              },
+              transition: 'all 0.3s ease'
+            }}
           >
             Filtros
           </Button>
-          <TextField size="small" value={q} disabled sx={{ minWidth: 300 }} />
+          <TextField 
+            size="small" 
+            value={q} 
+            disabled 
+            sx={{ 
+              minWidth: 300,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 50,
+                backgroundColor: 'white'
+              }
+            }} 
+          />
         </Box>
 
-        <Grid container spacing={2} justifyContent="center">
-          {recetas.length === 0 && !loading && <Grid item xs={12}><Typography>No se encontraron recetas.</Typography></Grid>}
-          {sortedRecetas.slice((page-1)*perPage, page*perPage).map(r => (
-            <Grid item key={r.idReceta || r.id} sx={{ width: { xs: '100%', sm: '48%', md: '23%' } }}>
-              <Box sx={{ border: '1px solid #eee', p: 2, borderRadius: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box component="img" src={r.urlImagen || 'https://placehold.co/600x360'} alt={r.nombre} onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} sx={{ width: '100%', height: 120, maxHeight: 140, objectFit: 'cover', borderRadius: 1 }} />
-                <Typography sx={{ mt: 1, fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{r.nombre}</Typography>
-                <Typography color="text.secondary" sx={{ mt: 1, flexGrow: 1 }}>{shortText(r.preparacion, 100)}</Typography>
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="caption" color="text.secondary">{formatFecha(r.fechaCreacion)}</Typography>
+        <Grid container spacing={3} columns={12}>
+          {recetas.length === 0 && !loading && (
+            <Grid item xs={12}>
+              <Box sx={{
+                textAlign: 'center',
+                py: 6,
+                backgroundColor: '#F7FAFC',
+                borderRadius: 3
+              }}>
+                <Typography sx={{ 
+                  color: '#718096', 
+                  fontFamily: 'Open Sans, sans-serif', 
+                  fontSize: { xs: '1rem', md: '1.1rem' }
+                }}>
+                  No se encontraron recetas.
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+          {sortedRecetas.slice((page-1)*perPage, page*perPage).map(r => {
+            const recetaId = r.idReceta || r.id;
+            return (
+              <Grid 
+                item 
+                key={recetaId} 
+                xs={6}
+                sx={{
+                  maxWidth: 'calc(50% - 12px)',
+                  flexBasis: 'calc(50% - 12px)',
+                  flexGrow: 0,
+                  flexShrink: 0
+                }}
+              >
+              <Box sx={{ 
+                backgroundColor: 'white',
+                borderRadius: 3,
+                overflow: 'hidden',
+                width: '100%',
+                height: 520,
+                display: 'flex', 
+                flexDirection: 'column',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)'
+                }
+              }}>
+                <Box sx={{ 
+                  width: '100%', 
+                  height: 300,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  backgroundColor: '#f5f5f5',
+                  position: 'relative'
+                }}>
+                  <Box 
+                    component="img" 
+                    src={r.urlImagen || 'https://placehold.co/600x360'} 
+                    alt={r.nombre} 
+                    onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} 
+                    sx={{ 
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }} 
+                  />
+                </Box>
+                <Box sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <Typography sx={{ 
+                    fontFamily: 'Lato, sans-serif', 
+                    fontWeight: 900,
+                    color: '#1A202C',
+                    fontSize: '1.1rem',
+                    mb: 2,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    minHeight: '2.6em'
+                  }}>
+                    {r.nombre}
+                  </Typography>
                   <Box>
-                    <IconButton size="small" onClick={() => handleLike(r.idReceta || r.id)} aria-label="like">
-                      {userInteractions.likes.has(r.idReceta || r.id) ? <ThumbUpIcon fontSize="small" color="primary" /> : <ThumbUpOutlinedIcon fontSize="small" />}
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleStar(r.idReceta || r.id)} aria-label="star">
-                      {userInteractions.estrellas.has(r.idReceta || r.id) ? <StarIcon fontSize="small" color="warning" /> : <StarBorderIcon fontSize="small" />}
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleFavorito(r.idReceta || r.id)} aria-label="fav">
-                      {userInteractions.favoritos.has(r.idReceta || r.id) ? <BookmarkIcon fontSize="small" color="error" /> : <BookmarkBorderIcon fontSize="small" />}
-                    </IconButton>
-                    <Button onClick={() => handleOpenReceta(r)} size="small">Ver receta</Button>
+                    <Typography variant="caption" sx={{ 
+                      color: '#969696', 
+                      fontFamily: 'Open Sans, sans-serif',
+                      display: 'block',
+                      mb: 1
+                    }}>
+                      {formatFecha(r.fechaCreacion)}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-start' }}>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleLike(recetaId)} 
+                        aria-label="like"
+                        sx={{
+                          backgroundColor: userInteractions.likes.has(recetaId) ? '#4299E1' : '#F7FAFC',
+                          color: userInteractions.likes.has(recetaId) ? 'white' : '#4299E1',
+                          '&:hover': {
+                            backgroundColor: '#4299E1',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        {userInteractions.likes.has(recetaId) ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleStar(recetaId)} 
+                        aria-label="star"
+                        sx={{
+                          backgroundColor: userInteractions.estrellas.has(recetaId) ? '#ED8936' : '#F7FAFC',
+                          color: userInteractions.estrellas.has(recetaId) ? 'white' : '#ED8936',
+                          '&:hover': {
+                            backgroundColor: '#ED8936',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        {userInteractions.estrellas.has(recetaId) ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleFavorito(recetaId)} 
+                        aria-label="fav"
+                        sx={{
+                          backgroundColor: userInteractions.favoritos.has(recetaId) ? '#F56565' : '#F7FAFC',
+                          color: userInteractions.favoritos.has(recetaId) ? 'white' : '#F56565',
+                          '&:hover': {
+                            backgroundColor: '#F56565',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        {userInteractions.favoritos.has(recetaId) ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
+                      </IconButton>
+                    </Box>
                   </Box>
+                  <Button 
+                    onClick={() => handleOpenReceta(r)} 
+                    fullWidth
+                    variant="contained"
+                    sx={{
+                      mt: 2,
+                      background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                      color: 'white',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 700,
+                      borderRadius: 50,
+                      py: { xs: 0.8, sm: 1 },
+                      fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(240, 147, 251, 0.4)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Ver receta
+                  </Button>
                 </Box>
               </Box>
             </Grid>
-          ))}
+            );
+          })}
         </Grid>
 
         {sortedRecetas.length > perPage && (
@@ -497,69 +731,276 @@ export default function SearchResults(){
         )}
 
         <Dialog open={openReceta} onClose={handleCloseReceta} fullWidth maxWidth="md">
-            <DialogTitle>{selectedReceta?.nombre}</DialogTitle>
-          <DialogContent dividers>
-            <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} sx={{ width: '100%', height: 360, maxHeight: 480, objectFit: 'cover', borderRadius: 1 }} />
-            <Typography sx={{ mt: 2, fontWeight: 700 }}>Ingredientes</Typography>
-              <Box component="ul" sx={{ pl: 2, mt: 1, mb: 2 }}>
-                {(selectedReceta?.ingredientes || []).map(ingrediente => 
-                  ingrediente.nombre.split('\n').filter(line => line.trim()).map((line, idx) => (
-                    <Box component="li" key={`${ingrediente.idIngrediente}-${idx}`} sx={{ listStyleType: 'disc', ml: 1, fontSize: '0.95rem', color: 'text.secondary', mb: 0.5 }}>
-                      {line.trim()}
-                    </Box>
-                  ))
-                )}
-              </Box>
-            <Typography sx={{ mt: 2, fontWeight: 700 }}>Preparación</Typography>
-            <Typography sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}>{selectedReceta?.preparacion}</Typography>
-            <Divider sx={{ my: 2 }} />
-            
-            {/* Botones de interacción con estadísticas */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-              {/* Botones e interacciones de izquierda */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {/* Botón Me Gusta con contador */}
-                <IconButton aria-label="like" onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}>
-                  {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon color="primary" /> : <ThumbUpOutlinedIcon />}
+        <DialogTitle sx={{ 
+          fontFamily: 'Lato, sans-serif', 
+          fontWeight: 900,
+          color: '#1A202C',
+          fontSize: { xs: '1.5rem', md: '1.75rem' },
+          borderBottom: '3px solid rgba(102, 126, 234, 0.3)',
+          pb: 2
+        }}>
+          {selectedReceta?.nombre}
+          {isAdmin() && (
+            <Typography component="span" sx={{ ml: 2, fontSize: '0.9rem', color: '#718096', fontWeight: 400 }}>
+              (ID: {selectedReceta?.idReceta || selectedReceta?.id})
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: { xs: 2, md: 3 } }}>
+          <Box 
+            component="img" 
+            src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} 
+            alt={selectedReceta?.nombre} 
+            onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} 
+            sx={{ 
+              width: '100%', 
+              height: { xs: 240, md: 360 }, 
+              maxHeight: 480, 
+              objectFit: 'cover', 
+              borderRadius: 3,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+            }} 
+          />
+          <Typography sx={{ 
+            mt: 3, 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            fontSize: '1.25rem'
+          }}>
+            Ingredientes
+          </Typography>
+          <Box component="ul" sx={{ pl: 3, mt: 1.5, mb: 3 }}>
+            {(selectedReceta?.ingredientes || []).map((ingrediente, idx) => {
+              const nombreIng = typeof ingrediente === 'string' ? ingrediente : ingrediente?.nombre || '';
+              return nombreIng.split('\n').filter(line => line.trim()).map((line, lineIdx) => (
+                <Box 
+                  component="li" 
+                  key={`ing-${idx}-${lineIdx}`} 
+                  sx={{ 
+                    listStyleType: 'disc', 
+                    ml: 1, 
+                    fontSize: '0.95rem', 
+                    color: '#969696', 
+                    mb: 0.5,
+                    fontFamily: 'Open Sans, sans-serif'
+                  }}
+                >
+                  {line.trim()}
+                </Box>
+              ));
+            })}
+          </Box>
+          <Typography sx={{ 
+            mt: 3, 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            fontSize: '1.25rem'
+          }}>
+            Preparación
+          </Typography>
+          <Typography sx={{ 
+            whiteSpace: 'pre-wrap', 
+            color: '#969696',
+            fontFamily: 'Open Sans, sans-serif',
+            lineHeight: 1.7,
+            mt: 1.5
+          }}>
+            {selectedReceta?.preparacion}
+          </Typography>
+          <Divider sx={{ my: 3 }} />
+          
+          {/* Botones de interacción con estadísticas */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            flexWrap: 'wrap', 
+            gap: 2,
+            backgroundColor: '#F9E9AE',
+            borderRadius: 2,
+            p: 2
+          }}>
+            {/* Botones e interacciones de izquierda */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* Botón Me Gusta con contador */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton 
+                  aria-label="like" 
+                  onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}
+                  sx={{
+                    backgroundColor: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                    color: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                    '&:hover': {
+                      backgroundColor: '#FA968B',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
                 </IconButton>
-                <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
                   {modalStats.likesCount}
                 </Typography>
-                
-                {/* Botón Estrellas con promedio */}
-                <IconButton aria-label="star" onClick={() => handleStar(selectedReceta?.idReceta || selectedReceta?.id)}>
-                  {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon color="warning" /> : <StarBorderIcon />}
+              </Box>
+              
+              {/* Botón Estrellas con promedio */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton 
+                  aria-label="star" 
+                  onClick={() => handleOpenRating(selectedReceta?.idReceta || selectedReceta?.id)}
+                  sx={{
+                    backgroundColor: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#99682E' : 'white',
+                    color: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#99682E',
+                    '&:hover': {
+                      backgroundColor: '#99682E',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon /> : <StarBorderIcon />}
                 </IconButton>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
                   {modalStats.avgStars > 0 ? modalStats.avgStars.toFixed(1) : '0.0'}
-                  <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontWeight: 400 }}>
+                  <Typography component="span" variant="body2" sx={{ ml: 0.5, color: '#969696', fontWeight: 400 }}>
                     ({modalStats.totalStars})
                   </Typography>
                 </Typography>
               </Box>
-              
-              {/* Botón Favorito a la derecha */}
-              <IconButton aria-label="fav" onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}>
-                {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon color="error" /> : <BookmarkBorderIcon />}
-              </IconButton>
             </Box>
             
-            <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
-            <List>
-              {(comentarios || []).map(c => (
-                <ListItem key={c.idComentario || c.id}><ListItemText primary={c.nombreUsuario || 'Usuario'} secondary={c.texto || c.comentario} /></ListItem>
-              ))}
-            </List>
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <TextField size="small" fullWidth placeholder="Escribe un comentario..." value={newComentario} onChange={(e)=> setNewComentario(e.target.value)} />
-              <Button size="small" variant="contained" onClick={async ()=>{ if(!isAuthenticated()){ setAuthPromptOpen(true); return; } if(!newComentario || !newComentario.trim()) return; try{ await postComentarioReceta(selectedReceta?.idReceta || selectedReceta?.id, newComentario); setNewComentario(''); await loadComentarios(selectedReceta?.idReceta || selectedReceta?.id); }catch(e){} }}>Enviar</Button>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseReceta}>Cerrar</Button>
-          </DialogActions>
-        </Dialog>
+            {/* Botón Favorito a la derecha */}
+            <IconButton 
+              aria-label="fav" 
+              onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}
+              sx={{
+                backgroundColor: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                color: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                '&:hover': {
+                  backgroundColor: '#FA968B',
+                  color: 'white'
+                }
+              }}
+            >
+              {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+            </IconButton>
+          </Box>
+          
+          <Typography sx={{ 
+            fontWeight: 900, 
+            mt: 3,
+            fontFamily: 'Roboto, sans-serif',
+            color: '#2F4295',
+            fontSize: '1.15rem'
+          }}>
+            Comentarios
+          </Typography>
+          <List sx={{ mt: 1 }}>
+            {(comentarios || []).map(c => (
+              <ListItem 
+                key={c.idComentario || c.id}
+                sx={{
+                  backgroundColor: '#F9E9AE',
+                  borderRadius: 2,
+                  mb: 1.5
+                }}
+              >
+                <ListItemText 
+                  primary={c.nombreUsuario || 'Usuario'} 
+                  secondary={c.texto || c.comentario}
+                  primaryTypographyProps={{
+                    fontFamily: 'Roboto, sans-serif',
+                    fontWeight: 700,
+                    color: '#2F4295'
+                  }}
+                  secondaryTypographyProps={{
+                    fontFamily: 'Open Sans, sans-serif',
+                    color: '#969696'
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
+          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+            <TextField 
+              size="small" 
+              fullWidth 
+              placeholder="Escribe un comentario..." 
+              value={newComentario} 
+              onChange={(e)=> setNewComentario(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 50,
+                  backgroundColor: 'white',
+                  '&:hover fieldset': {
+                    borderColor: '#F75442'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#F75442'
+                  }
+                }
+              }}
+            />
+            <Button 
+              size="small" 
+              variant="contained" 
+              onClick={async ()=>{ 
+                if(!isAuthenticated()){ 
+                  setAuthPromptOpen(true); 
+                  return; 
+                } 
+                if(!newComentario || !newComentario.trim()) return; 
+                try{ 
+                  await postComentarioReceta(selectedReceta?.idReceta || selectedReceta?.id, newComentario); 
+                  setNewComentario(''); 
+                  await loadComentarios(selectedReceta?.idReceta || selectedReceta?.id); 
+                }catch(e){
+                  console.error('Error posting comment:', e);
+                } 
+              }}
+              sx={{
+                background: 'linear-gradient(135deg, #F75442 0%, #FA968B 100%)',
+                borderRadius: 50,
+                px: 3,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FA968B 0%, #F75442 100%)'
+                }
+              }}
+            >
+              Enviar
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={handleCloseReceta}
+            sx={{
+              color: '#2F4295',
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: '#F9E9AE'
+              }
+            }}
+          >
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
         <AuthPromptDialog open={authPromptOpen} onClose={()=> setAuthPromptOpen(false)} />
+        
+        <RatingDialog
+          open={ratingDialogOpen}
+          onClose={() => setRatingDialogOpen(false)}
+          onRate={handleRateSubmit}
+          onDelete={handleDeleteRating}
+          recetaNombre={
+            currentRatingRecetaId 
+              ? recetas.find(r => (r.idReceta || r.id) === currentRatingRecetaId)?.nombre || selectedReceta?.nombre || 'Receta'
+              : 'Receta'
+          }
+          hasRating={currentRatingRecetaId ? userInteractions.estrellas.has(currentRatingRecetaId) : false}
+        />
 
         {/* Drawer de filtros */}
         <Drawer

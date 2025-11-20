@@ -18,6 +18,14 @@ export const formatFecha = (fecha) => {
       return fecha;
     }
     
+    // Si la fecha viene como array [año, mes, día, hora, minuto, segundo, nanosegundos]
+    if (Array.isArray(fecha) && fecha.length >= 3) {
+      const [year, month, day] = fecha;
+      const dayStr = String(day).padStart(2, '0');
+      const monthStr = String(month).padStart(2, '0');
+      return `${dayStr}-${monthStr}-${year}`;
+    }
+    
     // Convertir a objeto Date
     const date = new Date(fecha);
     

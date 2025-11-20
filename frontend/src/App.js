@@ -15,7 +15,6 @@ import UserFavoritos from './components/UserFavoritos';
 import UserRecetas from './components/UserRecetas';
 import NuevaReceta from './components/NuevaReceta';
 import Ajustes from './components/Ajustes';
-import DebugLikes from './components/DebugLikes';
 import AdminPanel from './components/AdminPanel';
 import DonacionSuccess from './components/DonacionSuccess';
 import DonacionCanceled from './components/DonacionCanceled';
@@ -46,7 +45,6 @@ function App() {
             <Route path="/donacion/success" element={<DonacionSuccess />} />
             <Route path="/donacion/cancel" element={<DonacionCanceled />} />
             <Route path="/donacion/canceled" element={<DonacionCanceled />} /> {/* Ruta legacy por si acaso */}
-            <Route path="/debug/likes" element={<DebugLikes />} />
           </Routes>
         </Box>
         <Footer />

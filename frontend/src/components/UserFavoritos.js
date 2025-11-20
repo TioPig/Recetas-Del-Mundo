@@ -15,6 +15,7 @@ import ListItemText from '@mui/material/ListItemText';
 import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -553,16 +554,37 @@ export default function UserFavoritos(){
 
   return (
     <Box>
-      <Box className="hero-categorias" sx={{ backgroundColor: '#F6F0E0', py: 4 }}>
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)', 
+        py: { xs: 4, md: 6 }
+      }}>
         <Container>
           <Box textAlign="center">
-            <Typography variant="h2" sx={{ color: '#6b4f34', fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Tus Favoritos</Typography>
+            <Typography variant="h3" sx={{ 
+              color: 'white', 
+              fontFamily: 'Lato, sans-serif', 
+              fontWeight: 900,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+            }}>
+              Tus Favoritos
+            </Typography>
+            <Typography sx={{
+              color: 'white',
+              fontFamily: 'Open Sans, sans-serif',
+              fontWeight: 600,
+              fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' },
+              mt: 1,
+              textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+            }}>
+              Todas tus recetas favoritas en un solo lugar
+            </Typography>
           </Box>
         </Container>
       </Box>
 
-      <Container maxWidth="xl" sx={{ py: 4, px: 2, maxWidth: '1400px', mx: 'auto' }}>
-      {loading && <Typography> Cargando... </Typography>}
+      <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, px: 2, mx: 'auto' }}>
+      {loading && <Typography>Cargando...</Typography>}
       
       {/* Botón de filtros */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start' }}>
@@ -571,55 +593,182 @@ export default function UserFavoritos(){
           startIcon={<FilterListIcon />} 
           onClick={handleOpenFilterDrawer}
           size="small"
-          sx={{ backgroundColor: '#F75442', '&:hover': { backgroundColor: '#d43f2f' } }}
+          sx={{ 
+            background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+            color: 'white',
+            fontFamily: 'Open Sans, sans-serif',
+            fontWeight: 700,
+            borderRadius: 50,
+            px: 3,
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+            '&:hover': { 
+              background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)',
+              boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+              transform: 'translateY(-2px)'
+            },
+            transition: 'all 0.3s ease'
+          }}
         >
           Filtros
         </Button>
       </Box>
       
-      <Grid container spacing={2} justifyContent="center">
-        {resolved.length === 0 && !loading && <Grid item xs={12}><Typography>No tienes favoritos aún.</Typography></Grid>}
+      <Grid container spacing={3} justifyContent="flex-start">        {resolved.length === 0 && !loading && <Grid item xs={12}><Typography>No tienes favoritos aún.</Typography></Grid>}
         {sortedFavoritos.slice((page-1)*perPage, page*perPage).map(r => (
-          <Grid item key={r.idReceta || r.id} sx={{ width: { xs: '100%', sm: '48%', md: '23%' } }}>
-            <Box sx={{ border: '1px solid #eee', p: 2, borderRadius: 1, height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', width: '100%' }}>
-              <Box component="img" src={r.urlImagen || 'https://placehold.co/600x360'} alt={r.nombre} onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} sx={{ width: '100%', height: 120, maxHeight: 140, objectFit: 'cover', borderRadius: 1 }} />
-              <Typography sx={{ mt: 1, fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{r.nombre}</Typography>
-              <Typography color="text.secondary" sx={{ mt: 1, flexGrow: 1, fontSize: '0.95rem' }}>{shortText(r.preparacion, 100)}</Typography>
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="caption" color="text.secondary">{formatFecha(r.fechaCreacion)}</Typography>
+          <Grid item key={r.idReceta || r.id} xs={12} sm={6} sx={{ width: 'calc(50% - 12px)' }}>
+            <Box sx={{ 
+              borderRadius: 3,
+              overflow: 'hidden',
+              width: '100%',
+              height: 520,
+              display: 'flex', 
+              flexDirection: 'column',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)'
+              }
+            }}>
+              {/* CONTENEDOR DE IMAGEN */}
+              <Box sx={{ 
+                width: '100%', 
+                height: 300,
+                overflow: 'hidden',
+                flexShrink: 0,
+                backgroundColor: '#f5f5f5',
+                position: 'relative'
+              }}>
+                <Box 
+                  component="img" 
+                  src={r.urlImagen || 'https://placehold.co/600x360'} 
+                  alt={r.nombre} 
+                  onError={(e)=>{ e.target.src='https://placehold.co/600x360'; }} 
+                  sx={{ 
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }} 
+                />
+              </Box>
+              
+              {/* CONTENIDO DE LA TARJETA */}
+              <Box sx={{ 
+                p: 2.5, 
+                flexGrow: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'space-between' 
+              }}>
+                <Typography sx={{ 
+                  fontFamily: 'Lato, sans-serif', 
+                  fontWeight: 900,
+                  color: '#1A202C',
+                  fontSize: '1.1rem',
+                  mb: 2,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  minHeight: '2.6em'
+                }}>
+                  {r.nombre}
+                </Typography>
+                
                 <Box>
-                  <IconButton 
-                    size="small" 
-                    onClick={() => handleLike(r.idReceta || r.id)} 
-                    aria-label="like"
-                  >
-                    {userInteractions.likes.has(r.idReceta || r.id) 
-                      ? <ThumbUpIcon fontSize="small" color="primary" /> 
-                      : <ThumbUpOutlinedIcon fontSize="small" />
-                    }
-                  </IconButton>
-                  <IconButton 
-                    size="small" 
-                    onClick={() => handleStarClick(r.idReceta || r.id, r.nombre)} 
-                    aria-label="star"
-                  >
-                    {userInteractions.estrellas.has(r.idReceta || r.id)
-                      ? <StarIcon fontSize="small" color="warning" />
-                      : <StarBorderIcon fontSize="small" />
-                    }
-                  </IconButton>
-                  <IconButton 
-                    size="small" 
-                    onClick={() => handleFavorito(r.idReceta || r.id)} 
-                    aria-label="fav"
-                  >
-                    {userInteractions.favoritos.has(r.idReceta || r.id)
-                      ? <BookmarkIcon fontSize="small" color="error" />
-                      : <BookmarkBorderIcon fontSize="small" />
-                    }
-                  </IconButton>
-                  <Button onClick={() => handleOpenReceta(r)} size="small" sx={{ fontFamily: 'Open Sans, sans-serif' }}>Ver receta</Button>
+                  <Typography variant="caption" sx={{ 
+                    color: '#969696', 
+                    fontFamily: 'Open Sans, sans-serif',
+                    display: 'block',
+                    mb: 1
+                  }}>
+                    {formatFecha(r.fechaCreacion)}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-start' }}>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleLike(r.idReceta || r.id)} 
+                      aria-label="like"
+                      sx={{
+                        backgroundColor: userInteractions.likes.has(r.idReceta || r.id) ? '#4299E1' : '#F7FAFC',
+                        color: userInteractions.likes.has(r.idReceta || r.id) ? 'white' : '#4299E1',
+                        '&:hover': {
+                          backgroundColor: '#4299E1',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      {userInteractions.likes.has(r.idReceta || r.id) 
+                        ? <ThumbUpIcon fontSize="small" /> 
+                        : <ThumbUpOutlinedIcon fontSize="small" />
+                      }
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleStarClick(r.idReceta || r.id, r.nombre)} 
+                      aria-label="star"
+                      sx={{
+                        backgroundColor: userInteractions.estrellas.has(r.idReceta || r.id) ? '#ED8936' : '#F7FAFC',
+                        color: userInteractions.estrellas.has(r.idReceta || r.id) ? 'white' : '#ED8936',
+                        '&:hover': {
+                          backgroundColor: '#ED8936',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      {userInteractions.estrellas.has(r.idReceta || r.id)
+                        ? <StarIcon fontSize="small" />
+                        : <StarBorderIcon fontSize="small" />
+                      }
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleFavorito(r.idReceta || r.id)} 
+                      aria-label="fav"
+                      sx={{
+                        backgroundColor: userInteractions.favoritos.has(r.idReceta || r.id) ? '#F56565' : '#F7FAFC',
+                        color: userInteractions.favoritos.has(r.idReceta || r.id) ? 'white' : '#F56565',
+                        '&:hover': {
+                          backgroundColor: '#F56565',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      {userInteractions.favoritos.has(r.idReceta || r.id)
+                        ? <BookmarkIcon fontSize="small" />
+                        : <BookmarkBorderIcon fontSize="small" />
+                      }
+                    </IconButton>
+                  </Box>
                 </Box>
+                
+                <Button 
+                  onClick={() => handleOpenReceta(r)} 
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt: 2,
+                    background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                    color: 'white',
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 700,
+                    borderRadius: 50,
+                    py: { xs: 0.8, sm: 1 },
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 12px rgba(240, 147, 251, 0.4)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Ver receta
+                </Button>
               </Box>
             </Box>
           </Grid>
@@ -639,65 +788,244 @@ export default function UserFavoritos(){
       )}
 
       <Dialog open={openReceta} onClose={handleCloseReceta} fullWidth maxWidth="md">
-        <DialogTitle sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{selectedReceta?.nombre}</DialogTitle>
-        <DialogContent dividers>
-          <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} sx={{ width: '100%', height: 360, maxHeight: 480, objectFit: 'cover', borderRadius: 1 }} />
+        <DialogTitle sx={{ 
+          fontFamily: 'Lato, sans-serif', 
+          fontWeight: 900,
+          color: '#1A202C',
+          fontSize: { xs: '1.5rem', md: '1.75rem' },
+          borderBottom: '3px solid rgba(102, 126, 234, 0.3)',
+          pb: 2
+        }}>
+          {selectedReceta?.nombre}
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: { xs: 2, md: 3 } }}>
+          <Box 
+            component="img" 
+            src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} 
+            alt={selectedReceta?.nombre} 
+            onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} 
+            sx={{ 
+              width: '100%', 
+              height: { xs: 240, md: 360 },
+              objectFit: 'cover',
+              borderRadius: 3,
+              mb: 3,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }} 
+          />
           
-          <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Ingredientes</Typography>
-          <Box component="ul" sx={{ pl: 2, mt: 1, mb: 2 }}>
-            {(selectedReceta?.ingredientes || []).map(ingrediente => 
-              ingrediente.nombre.split('\n').filter(line => line.trim()).map((line, idx) => (
-                <Box component="li" key={`${ingrediente.idIngrediente}-${idx}`} sx={{ listStyleType: 'disc', ml: 1, fontSize: '0.95rem', color: 'text.secondary', mb: 0.5 }}>
-                  {line.trim()}
-                </Box>
-              ))
-            )}
-          </Box>
-          <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Preparación</Typography>
-          <Typography sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}>{selectedReceta?.preparacion}</Typography>
-          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" sx={{ 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            mb: 2,
+            fontSize: '1.25rem'
+          }}>
+            Ingredientes
+          </Typography>
+          <Typography sx={{ 
+            fontFamily: 'Open Sans, sans-serif', 
+            color: '#969696',
+            mb: 3,
+            fontSize: '1rem',
+            lineHeight: 1.7,
+            whiteSpace: 'pre-wrap'
+          }}>
+            {selectedReceta?.ingredientes 
+              ? (Array.isArray(selectedReceta.ingredientes) 
+                  ? selectedReceta.ingredientes.map(ing => typeof ing === 'string' ? ing : ing.nombre).join(', ')
+                  : selectedReceta.ingredientes)
+              : 'No disponible'}
+          </Typography>
+          
+          <Divider sx={{ my: 3 }} />
+          
+          <Typography variant="h6" sx={{ 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            mb: 2,
+            fontSize: '1.25rem'
+          }}>
+            Preparación
+          </Typography>
+          <Typography sx={{ 
+            fontFamily: 'Open Sans, sans-serif', 
+            color: '#969696',
+            mb: 3,
+            fontSize: '1rem',
+            lineHeight: 1.7,
+            whiteSpace: 'pre-wrap'
+          }}>
+            {selectedReceta?.preparacion || 'No disponible'}
+          </Typography>
+          
+          <Divider sx={{ my: 3 }} />
           
           {/* Botones de interacción con estadísticas */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            flexWrap: 'wrap', 
+            gap: 2,
+            backgroundColor: '#F9E9AE',
+            borderRadius: 2,
+            p: 2
+          }}>
             {/* Botones e interacciones de izquierda */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {/* Botón Me Gusta con contador */}
-              <IconButton aria-label="like" onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}>
-                {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon color="primary" /> : <ThumbUpOutlinedIcon />}
-              </IconButton>
-              <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>
-                {recetaStats.likesCount}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton 
+                  aria-label="like" 
+                  onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}
+                  sx={{
+                    backgroundColor: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                    color: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                    '&:hover': {
+                      backgroundColor: '#FA968B',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
+                </IconButton>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
+                  {recetaStats.likesCount}
+                </Typography>
+              </Box>
               
               {/* Botón Estrellas con promedio */}
-              <IconButton aria-label="star" onClick={() => handleStarClick(selectedReceta?.idReceta || selectedReceta?.id, selectedReceta?.nombre)}>
-                {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon color="warning" /> : <StarBorderIcon />}
-              </IconButton>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {recetaStats.avgStars > 0 ? recetaStats.avgStars.toFixed(1) : '0.0'}
-                <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontWeight: 400 }}>
-                  ({recetaStats.totalStars})
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton 
+                  aria-label="star" 
+                  onClick={() => handleStarClick(selectedReceta?.idReceta || selectedReceta?.id, selectedReceta?.nombre)}
+                  sx={{
+                    backgroundColor: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#99682E' : 'white',
+                    color: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#99682E',
+                    '&:hover': {
+                      backgroundColor: '#99682E',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon /> : <StarBorderIcon />}
+                </IconButton>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
+                  {recetaStats.avgStars > 0 ? recetaStats.avgStars.toFixed(1) : '0.0'}
+                  <Typography component="span" variant="body2" sx={{ ml: 0.5, color: '#969696', fontWeight: 400 }}>
+                    ({recetaStats.totalStars})
+                  </Typography>
                 </Typography>
-              </Typography>
+              </Box>
             </Box>
             
             {/* Botón Favorito a la derecha */}
-            <IconButton aria-label="fav" onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}>
-              {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon color="error" /> : <BookmarkBorderIcon />}
+            <IconButton 
+              aria-label="fav" 
+              onClick={() => handleFavorito(selectedReceta?.idReceta || selectedReceta?.id)}
+              sx={{
+                backgroundColor: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                color: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                '&:hover': {
+                  backgroundColor: '#FA968B',
+                  color: 'white'
+                }
+              }}
+            >
+              {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon /> : <BookmarkBorderIcon />}
             </IconButton>
           </Box>
           
-          <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
-          <List>
-            {(comentarios || []).map(c => (
-              <ListItem key={c.idComentario || c.id}><ListItemText primary={c.nombreUsuario || 'Usuario'} secondary={c.texto || c.comentario} /></ListItem>
-            ))}
-          </List>
-          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-            <TextField size="small" fullWidth placeholder="Escribe un comentario..." value={newComentario} onChange={(e)=> setNewComentario(e.target.value)} />
-            <Button size="small" variant="contained" onClick={async ()=>{ 
-              if(!isAuthenticated()){ setAuthPromptOpen(true); return; } 
-              if(!newComentario || !newComentario.trim()) return; 
+          
+          <Typography variant="h6" sx={{ 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            mb: 2,
+            fontSize: '1.25rem'
+          }}>
+            Comentarios
+          </Typography>
+          
+          {comentarios.length === 0 ? (
+            <Typography sx={{ 
+              fontFamily: 'Open Sans, sans-serif', 
+              color: '#969696',
+              fontStyle: 'italic',
+              mb: 2
+            }}>
+              No hay comentarios aún. ¡Sé el primero en comentar!
+            </Typography>
+          ) : (
+            <List sx={{ mb: 2 }}>
+              {comentarios.map((c, idx) => (
+                <ListItem 
+                  key={idx} 
+                  sx={{ 
+                    backgroundColor: '#F9E9AE',
+                    borderRadius: 2,
+                    mb: 1,
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography sx={{ 
+                        fontFamily: 'Open Sans, sans-serif', 
+                        fontWeight: 700,
+                        color: '#1A202C',
+                        fontSize: '0.95rem'
+                      }}>
+                        {c.nombreUsuario || 'Usuario'}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography sx={{ 
+                        fontFamily: 'Open Sans, sans-serif', 
+                        color: '#4A5568',
+                        fontSize: '0.9rem',
+                        mt: 0.5
+                      }}>
+                        {c.comentario || c.texto}
+                      </Typography>
+                    }
+                  />
+                  <Typography variant="caption" sx={{ 
+                    color: '#718096',
+                    fontFamily: 'Open Sans, sans-serif',
+                    mt: 0.5
+                  }}>
+                    {formatFecha(c.fechaCreacion || c.fecha)}
+                  </Typography>
+                </ListItem>
+              ))}
+            </List>
+          )}
+          
+          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Escribe un comentario..."
+              value={newComentario}
+              onChange={(e) => setNewComentario(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 50,
+                  borderColor: '#F75442',
+                  fontFamily: 'Open Sans, sans-serif'
+                }
+              }}
+            />
+            <Button 
+              size="small" 
+              variant="contained" 
+              onClick={async ()=>{ 
+                if(!isAuthenticated()){ setAuthPromptOpen(true); return; } 
+                if(!newComentario || !newComentario.trim()) return; 
               try{ 
                 await postComentarioReceta(selectedReceta?.idReceta || selectedReceta?.id, newComentario); 
                 setNewComentario(''); 
@@ -705,7 +1033,21 @@ export default function UserFavoritos(){
               }catch(e){
                 // Error silencioso
               } 
-            }}>Enviar</Button>
+            }}
+              sx={{
+                background: '#F75442',
+                color: 'white',
+                borderRadius: 50,
+                px: 3,
+                fontFamily: 'Open Sans, sans-serif',
+                fontWeight: 700,
+                boxShadow: 'none',
+                '&:hover': {
+                  background: '#d43f2f',
+                  boxShadow: '0 4px 8px rgba(247, 84, 66, 0.3)'
+                }
+              }}
+            >Enviar</Button>
           </Box>
         </DialogContent>
         <DialogActions>

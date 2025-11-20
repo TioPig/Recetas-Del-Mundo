@@ -26,10 +26,13 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Button from '@mui/material/Button';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthPromptDialog from './AuthPromptDialog';
 import RatingDialog from './RatingDialog';
+import $ from 'jquery';
+import 'owl.carousel/dist/assets/owl.carousel.css';
+import 'owl.carousel/dist/assets/owl.theme.default.css';
 import { 
   getPaises, 
   getRecetasTrending, 
@@ -45,11 +48,19 @@ import {
   getEstrellas,
   getFavoritos,
   isAuthenticated,
+  isAdmin,
   getComentariosReceta,
   postComentarioReceta,
-  getUserNombre
+  getUserNombre,
+  formatFecha
 } from '../api';
-import { Link as RouterLink } from 'react-router-dom';export default function Home(){
+import { Link as RouterLink } from 'react-router-dom';
+
+// Hacer jQuery disponible globalmente para owl.carousel
+window.jQuery = window.$ = $;
+
+// Importar owl.carousel después de configurar jQuery globalmente
+require('owl.carousel');export default function Home(){
   const navigate = useNavigate();
   const [paisesList, setPaisesList] = useState([]);
   const [carouselRecipes, setCarouselRecipes] = useState([]);
@@ -97,7 +108,7 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
     
     // Load carousel recipes (trending + recipe of the day)
     Promise.all([
-      getRecetasTrending(10).catch(()=>({ data: [] })),
+      getRecetasTrending(1).catch(()=>({ data: [] })),
       getRecetaDelDia().catch(()=>null)
     ]).then(([trendingRes, recetaDelDiaRes]) => {
       const trendingData = trendingRes && trendingRes.data ? trendingRes.data : trendingRes;
@@ -109,7 +120,7 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
       const recipes = [];
       if(recetaDelDia) recipes.push({ ...recetaDelDia, isRecetaDelDia: true });
       
-      // Seleccionar la mejor receta de las 10 trending
+      // Seleccionar la mejor receta trending (ahora solo 1)
       const bestTrending = selectBestRecipe(trendingList);
       if(bestTrending) {
         recipes.push({ ...bestTrending, isRecetaDelDia: false });
@@ -438,86 +449,200 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
   return (
     <Box>
       {/* Hero */}
-      <Box sx={{ backgroundImage: `url('/img/fondo_inicio.jpg')`, backgroundRepeat: 'repeat', backgroundSize: '150px', py: 6 }}>
-        <Container sx={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-          <Box sx={{ flex: '1 1 500px' }}>
-            <Typography variant="h3" component="h1" sx={{ color: 'rgb(47, 66, 149)', fontFamily: 'Roboto, sans-serif', fontWeight: 700 }}>Bienvenid@</Typography>
-            <Typography sx={{ color: 'rgb(153, 104, 46)', fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>¡Bienvenido a nuestra pagina de comidas! Aquí podrás descubrir deliciosas opciones de diferentes países para satisfacer tus antojos culinarios. ¡Buen provecho!</Typography>
+      <Box sx={{ 
+        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)', 
+        py: { xs: 4, sm: 6, md: 8 },
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: `url('/img/fondo_inicio.jpg')`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '150px',
+          opacity: 0.08,
+          zIndex: 0
+        }
+      }}>
+        <Container sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 4 }, flexWrap: { xs: 'wrap', md: 'nowrap' }, position: 'relative', zIndex: 1 }}>
+          <Box sx={{ flex: '1 1 100%', textAlign: { xs: 'center', md: 'left' } }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                color: '#FFFFFF', 
+                fontFamily: 'Roboto, sans-serif', 
+                fontWeight: 900,
+                mb: 2,
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+              }}
+            >
+              Bienvenid@
+            </Typography>
+            <Typography sx={{ 
+              color: '#FFFFFF', 
+              fontFamily: 'Open Sans, sans-serif', 
+              fontWeight: 600,
+              fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' },
+              lineHeight: 1.6,
+              textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+              maxWidth: { xs: '100%', md: '500px' }
+            }}>
+              ¡Bienvenido a nuestra pagina de comidas! Aquí podrás descubrir deliciosas opciones de diferentes países para satisfacer tus antojos culinarios. ¡Buen provecho!
+            </Typography>
           </Box>
-          <Box sx={{ flex: '0 0 420px' }}>
-            <Box component="img" src="/img/cheems-waso.png" alt="" sx={{ width: '100%', maxWidth: 420 }} />
+          <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 420px' }, display: { xs: 'none', sm: 'flex' }, justifyContent: 'center' }}>
+            <Box 
+              component="img" 
+              src="/img/cheems-waso.png" 
+              alt="" 
+              sx={{ 
+                width: '100%', 
+                maxWidth: { xs: 280, sm: 350, md: 420 },
+                filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.2))'
+              }} 
+            />
           </Box>
         </Container>
       </Box>
 
       {/* Como funciona */}
-      <Box sx={{ backgroundColor: '#F9E9AE', py: 6 }}>
+      <Box sx={{ backgroundColor: '#F7FAFC', py: { xs: 4, md: 6 } }}>
         <Container>
-        <Box>
-          <Box/>
-        </Box>
-          <Stack spacing={3} alignItems="center">
+          <Stack spacing={4} alignItems="center">
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
-              <Typography variant="h5" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>Como funciona</Typography>
-              <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
+              <CheckCircleIcon sx={{ color: '#667EEA', fontSize: { xs: 28, md: 32 } }} />
+              <Typography variant="h4" sx={{ 
+                color: '#1A202C', 
+                fontFamily: 'Lato, sans-serif', 
+                fontWeight: 900,
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+              }}>
+                Cómo funciona
+              </Typography>
+              <CheckCircleIcon sx={{ color: '#667EEA', fontSize: { xs: 28, md: 32 } }} />
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-              <Box sx={{ textAlign: 'center', flexBasis: { xs: '100%', md: '30%' } }}>
-                <Box component="img" src="/img/Eat-and-Enjoy-8.png" alt="acceso" sx={{ maxWidth: 150 }} />
-                <Typography variant="h6" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>¿De donde puedes Acceder?</Typography>
-                <Typography color="text.secondary" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 400 }}>Desde todas las partes del mundo, sin importar donde seas</Typography>
+            <Box sx={{ display: 'flex', gap: { xs: 2, md: 4 }, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+              <Box sx={{ 
+                textAlign: 'center', 
+                flexBasis: { xs: '100%', sm: 'calc(50% - 16px)', md: '30%' },
+                backgroundColor: 'white',
+                borderRadius: 3,
+                p: { xs: 2, md: 3 },
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)'
+                }
+              }}>
+                <Box component="img" src="/img/Eat-and-Enjoy-8.png" alt="acceso" sx={{ maxWidth: { xs: 100, md: 120 }, mb: 2 }} />
+                <Typography variant="h6" sx={{ 
+                  color: '#667EEA', 
+                  fontFamily: 'Lato, sans-serif', 
+                  fontWeight: 900, 
+                  mb: 1,
+                  fontSize: { xs: '1rem', md: '1.25rem' }
+                }}>
+                  ¿De donde puedes Acceder?
+                </Typography>
+                <Typography sx={{ 
+                  color: '#718096', 
+                  fontFamily: 'Open Sans, sans-serif', 
+                  fontWeight: 400,
+                  fontSize: { xs: '0.875rem', md: '1rem' }
+                }}>
+                  Desde todas las partes del mundo, sin importar donde seas
+                </Typography>
               </Box>
 
-              <Box sx={{ textAlign: 'center', flexBasis: { xs: '100%', md: '30%' } }}>
-                <Box component="img" src="/img/Meal-icon-8.png" alt="de-donde" sx={{ maxWidth: 150 }} />
-                <Typography variant="h6" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>¿De donde?</Typography>
-                <Typography color="text.secondary" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 400 }}>Gracias a la gran comunidad culinaria, podemos traer recetas desde cualquier parte del mundo</Typography>
+              <Box sx={{ 
+                textAlign: 'center', 
+                flexBasis: { xs: '100%', sm: 'calc(50% - 16px)', md: '30%' },
+                backgroundColor: 'white',
+                borderRadius: 3,
+                p: { xs: 2, md: 3 },
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)'
+                }
+              }}>
+                <Box component="img" src="/img/Meal-icon-8.png" alt="de-donde" sx={{ maxWidth: { xs: 100, md: 120 }, mb: 2 }} />
+                <Typography variant="h6" sx={{ 
+                  color: '#667EEA', 
+                  fontFamily: 'Lato, sans-serif', 
+                  fontWeight: 900, 
+                  mb: 1,
+                  fontSize: { xs: '1rem', md: '1.25rem' }
+                }}>
+                  ¿De donde?
+                </Typography>
+                <Typography sx={{ 
+                  color: '#718096', 
+                  fontFamily: 'Open Sans, sans-serif', 
+                  fontWeight: 400,
+                  fontSize: { xs: '0.875rem', md: '1rem' }
+                }}>
+                  Gracias a la gran comunidad culinaria, podemos traer recetas desde cualquier parte del mundo
+                </Typography>
               </Box>
 
-              <Box sx={{ textAlign: 'center', flexBasis: { xs: '100%', md: '30%' } }}>
-                <Box component="img" src="/img/Recurso-41-8.png" alt="ayuda" sx={{ maxWidth: 150 }} />
-                <Typography variant="h6" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>¿Puedo Ayudar?</Typography>
-                <Typography color="text.secondary" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 400 }}>claro, solo necesitas acceder y podras aportar a esta gran comunidad</Typography>
+              <Box sx={{ 
+                textAlign: 'center', 
+                flexBasis: { xs: '100%', sm: 'calc(50% - 16px)', md: '30%' },
+                backgroundColor: 'white',
+                borderRadius: 3,
+                p: { xs: 2, md: 3 },
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 8px 24px rgba(102, 126, 234, 0.2)'
+                }
+              }}>
+                <Box component="img" src="/img/Recurso-41-8.png" alt="ayuda" sx={{ maxWidth: { xs: 100, md: 120 }, mb: 2 }} />
+                <Typography variant="h6" sx={{ 
+                  color: '#667EEA', 
+                  fontFamily: 'Lato, sans-serif', 
+                  fontWeight: 900, 
+                  mb: 1,
+                  fontSize: { xs: '1rem', md: '1.25rem' }
+                }}>
+                  ¿Puedo Ayudar?
+                </Typography>
+                <Typography sx={{ 
+                  color: '#718096', 
+                  fontFamily: 'Open Sans, sans-serif', 
+                  fontWeight: 400,
+                  fontSize: { xs: '0.875rem', md: '1rem' }
+                }}>
+                  claro, solo necesitas acceder y podras aportar a esta gran comunidad
+                </Typography>
               </Box>
             </Box>
           </Stack>
         </Container>
       </Box>
 
-      {/* RECETAS */}
-      <Container sx={{ py: 4 }}>
-        <Box textAlign="center">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center' }}>
-            <Box sx={{ flex: '1 1 30%', maxWidth: 360, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
-            <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
-            <Typography variant="h4" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>RECETAS</Typography>
-            <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
-            <Box sx={{ flex: '1 1 30%', maxWidth: 360, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2, flexWrap: 'nowrap' }}>
-            <Box sx={{ flex: '1 1 50%', minWidth: 0, display: 'flex', justifyContent: 'center' }}>
-              <a href="/paises"><Box component="img" src="/img/por-pais.png" alt="" sx={{ width: '100%', maxWidth: 636, maxHeight: 265, objectFit: 'contain', display: 'block' }} /></a>
-            </Box>
-            <Box sx={{ flex: '1 1 50%', minWidth: 0, display: 'flex', justifyContent: 'center' }}>
-              <a href="/categorias"><Box component="img" src="/img/por-tipo.png" alt="" sx={{ width: '100%', maxWidth: 636, maxHeight: 265, objectFit: 'contain', display: 'block' }} /></a>
-            </Box>
-          </Box>
-        </Box>
-      </Container>
-
       {/* PAÍSES */}
-      <Container maxWidth="xl" sx={{ py: 4, maxWidth: '1400px' }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 }, maxWidth: '1400px' }}>
         <Box textAlign="center">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center' }}>
-            <Box sx={{ flex: '1 1 30%', maxWidth: 385, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
-            <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
-            <Typography variant="h4" sx={{ color: '#99682E', fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>PAÍSES</Typography>
-            <CheckCircleIcon sx={{ color: '#99682E', fontSize: 28 }} />
-            <Box sx={{ flex: '1 1 30%', maxWidth: 385, borderBottom: '2px solid rgba(153,104,46,0.7)' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 }, justifyContent: 'center', mb: { xs: 3, md: 4 } }}>
+            <Box sx={{ display: { xs: 'none', sm: 'block' }, flex: '1 1 30%', maxWidth: 385, borderBottom: '3px solid rgba(102, 126, 234, 0.7)' }} />
+            <CheckCircleIcon sx={{ color: '#667EEA', fontSize: { xs: 24, md: 32 } }} />
+            <Typography variant="h4" sx={{ color: '#1A202C', fontFamily: 'Lato, sans-serif', fontWeight: 900, fontSize: { xs: '1.5rem', md: '2.125rem' } }}>PAÍSES</Typography>
+            <CheckCircleIcon sx={{ color: '#667EEA', fontSize: { xs: 24, md: 32 } }} />
+            <Box sx={{ display: { xs: 'none', sm: 'block' }, flex: '1 1 30%', maxWidth: 385, borderBottom: '3px solid rgba(102, 126, 234, 0.7)' }} />
           </Box>
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
             <PaisesPreview />
           </Box>
         </Box>
@@ -525,68 +650,168 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
 
       {/* Divider between PAÍSES and RECETA TRENDING TOPIC */}
       <Container sx={{ py: 1 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-          <Box sx={{ width: { xs: '95%', md: '88%' }, borderTop: '2px solid rgba(153,104,46,0.85)', borderRadius: 1 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: { xs: 1, md: 2 } }}>
+          <Box sx={{ width: { xs: '95%', md: '88%' }, borderTop: '2px solid rgba(102, 126, 234, 0.85)', borderRadius: 1 }} />
         </Box>
       </Container>
 
       {/* RECETA TRENDING TOPIC / RECETA DEL DÍA - CAROUSEL */}
-      <Container sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-          <Box sx={{ flex: '1 1 50%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h5" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 700, color: '#99682E' }}>
-                {currentRecipe?.isRecetaDelDia ? 'Receta del Día 🌟' : 'Receta Trending Topic'}
+      <Container sx={{ py: { xs: 4, md: 6 } }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 2, md: 4 }, 
+          alignItems: 'flex-start', 
+          flexWrap: { xs: 'wrap', md: 'nowrap' },
+          backgroundColor: 'white',
+          borderRadius: 3,
+          p: { xs: 2, md: 4 },
+          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.15)'
+        }}>
+          <Box sx={{ flex: '1 1 100%', md: '1 1 50%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 2, md: 3 }, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h5" sx={{ 
+                fontFamily: 'Lato, sans-serif', 
+                fontWeight: 900, 
+                color: '#1A202C',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                fontSize: { xs: '1.2rem', md: '1.5rem' }
+              }}>
+                {currentRecipe?.isRecetaDelDia && '🌟 '}
+                {currentRecipe?.isRecetaDelDia ? 'Receta del Día' : 'Receta Trending Topic'}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <IconButton onClick={handlePrevious} disabled={carouselRecipes.length === 0} size="small">
-                  <ArrowBackIosNewIcon />
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <IconButton 
+                  onClick={handlePrevious} 
+                  disabled={carouselRecipes.length === 0} 
+                  size="small"
+                  sx={{
+                    background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+                    color: 'white',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)'
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#E2E8F0'
+                    }
+                  }}
+                >
+                  <ArrowBackIosNewIcon fontSize="small" />
                 </IconButton>
-                <Typography sx={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 600, color: '#667EEA', minWidth: '50px', textAlign: 'center', fontSize: { xs: '0.875rem', md: '1rem' } }}>
                   {carouselRecipes.length > 0 ? `${currentIndex + 1}/${carouselRecipes.length}` : '0/0'}
                 </Typography>
-                <IconButton onClick={handleNext} disabled={carouselRecipes.length === 0} size="small">
-                  <ArrowForwardIosIcon />
+                <IconButton 
+                  onClick={handleNext} 
+                  disabled={carouselRecipes.length === 0} 
+                  size="small"
+                  sx={{
+                    background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+                    color: 'white',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%)'
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#E2E8F0'
+                    }
+                  }}
+                >
+                  <ArrowForwardIosIcon fontSize="small" />
                 </IconButton>
               </Box>
             </Box>
             {currentRecipe ? (
               <>
-                <Typography variant="h6" sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 700 }} id="recetaDelDiaNombre">{currentRecipe.nombre}</Typography>
-                <Typography sx={{ mt: 1 }} id="recetaDelDiaDescripcion">
+                <Typography variant="h6" sx={{ fontFamily: 'Roboto, sans-serif', fontWeight: 900, color: '#1A202C', mb: 1, fontSize: { xs: '1rem', md: '1.25rem' } }} id="recetaDelDiaNombre">
+                  {currentRecipe.nombre}
+                </Typography>
+                <Typography sx={{ mt: 1, color: '#718096', fontFamily: 'Open Sans, sans-serif', lineHeight: 1.6, fontSize: { xs: '0.875rem', md: '1rem' } }} id="recetaDelDiaDescripcion">
                   {truncateText(currentRecipe.descripcionCorta || currentRecipe.descripcion || '', 100)}
                 </Typography>
                 
                 {/* Interactions and Statistics */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, mb: 2, flexWrap: 'wrap', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconButton onClick={() => handleLike(currentRecipe.idReceta || currentRecipe.id)} size="small">
-                      {userInteractions.likes.has(currentRecipe.idReceta || currentRecipe.id) 
-                        ? <ThumbUpIcon color="primary" /> 
-                        : <ThumbUpOutlinedIcon />
-                      }
-                    </IconButton>
-                    <Typography>{recipeStats.likesCount}</Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  mt: { xs: 2, md: 3 }, 
+                  mb: { xs: 2, md: 3 }, 
+                  flexWrap: 'wrap', 
+                  gap: 2,
+                  backgroundColor: '#F7FAFC',
+                  borderRadius: 2,
+                  p: { xs: 1.5, md: 2 }
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <IconButton 
+                        onClick={() => handleLike(currentRecipe.idReceta || currentRecipe.id)} 
+                        size="small"
+                        sx={{
+                          backgroundColor: userInteractions.likes.has(currentRecipe.idReceta || currentRecipe.id) ? '#4299E1' : 'white',
+                          color: userInteractions.likes.has(currentRecipe.idReceta || currentRecipe.id) ? 'white' : '#4299E1',
+                          '&:hover': {
+                            backgroundColor: '#4299E1',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        {userInteractions.likes.has(currentRecipe.idReceta || currentRecipe.id) 
+                          ? <ThumbUpIcon fontSize="small" /> 
+                          : <ThumbUpOutlinedIcon fontSize="small" />
+                        }
+                      </IconButton>
+                      <Typography sx={{ fontWeight: 600, color: '#1A202C', fontSize: { xs: '0.875rem', md: '1rem' } }}>{recipeStats.likesCount}</Typography>
+                    </Box>
                     
-                    <IconButton onClick={() => handleOpenRating(currentRecipe.idReceta || currentRecipe.id, currentRecipe.nombre)} size="small">
-                      {userInteractions.estrellas.has(currentRecipe.idReceta || currentRecipe.id) 
-                        ? <StarIcon color="primary" /> 
-                        : <StarOutlineIcon />
-                      }
-                    </IconButton>
-                    <Typography>{recipeStats.avgStars.toFixed(1)} ({recipeStats.totalStars})</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <IconButton 
+                        onClick={() => handleOpenRating(currentRecipe.idReceta || currentRecipe.id, currentRecipe.nombre)} 
+                        size="small"
+                        sx={{
+                          backgroundColor: userInteractions.estrellas.has(currentRecipe.idReceta || currentRecipe.id) ? '#ED8936' : 'white',
+                          color: userInteractions.estrellas.has(currentRecipe.idReceta || currentRecipe.id) ? 'white' : '#ED8936',
+                          '&:hover': {
+                            backgroundColor: '#ED8936',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        {userInteractions.estrellas.has(currentRecipe.idReceta || currentRecipe.id) 
+                          ? <StarIcon fontSize="small" /> 
+                          : <StarOutlineIcon fontSize="small" />
+                        }
+                      </IconButton>
+                      <Typography sx={{ fontWeight: 600, color: '#1A202C', fontSize: { xs: '0.875rem', md: '1rem' } }}>
+                        {recipeStats.avgStars.toFixed(1)} 
+                        <Typography component="span" sx={{ color: '#718096', fontSize: { xs: '0.75rem', md: '0.85rem' } }}>
+                          ({recipeStats.totalStars})
+                        </Typography>
+                      </Typography>
+                    </Box>
                   </Box>
                   
-                  <IconButton onClick={() => handleFavorite(currentRecipe.idReceta || currentRecipe.id)}>
+                  <IconButton 
+                    onClick={() => handleFavorite(currentRecipe.idReceta || currentRecipe.id)}
+                    sx={{
+                      backgroundColor: userInteractions.favoritos.has(currentRecipe.idReceta || currentRecipe.id) ? '#F56565' : 'white',
+                      color: userInteractions.favoritos.has(currentRecipe.idReceta || currentRecipe.id) ? 'white' : '#F56565',
+                      '&:hover': {
+                        backgroundColor: '#F56565',
+                        color: 'white'
+                      }
+                    }}
+                  >
                     {userInteractions.favoritos.has(currentRecipe.idReceta || currentRecipe.id)
-                      ? <BookmarkIcon color="primary" />
+                      ? <BookmarkIcon />
                       : <BookmarkBorderIcon />
                     }
                   </IconButton>
                 </Box>
 
-                <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Ingredientes</Typography>
-                <Box component="ul" sx={{ pl: 3, mt: 0.5, mb: 1 }}>
+                <Typography sx={{ mt: { xs: 1.5, md: 2 }, fontFamily: 'Roboto, sans-serif', fontWeight: 900, color: '#1A202C', fontSize: { xs: '0.95rem', md: '1rem' } }}>Ingredientes</Typography>
+                <Box component="ul" sx={{ pl: 3, mt: 1, mb: 2, color: '#718096', fontSize: { xs: '0.875rem', md: '1rem' } }}>
                   {(currentRecipe.ingredientes || []).slice(0, 3).map(i => (
                     <li key={i.idIngrediente || i.id}>{truncateText(i.nombre, 40)}</li>
                   ))}
@@ -595,30 +820,34 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
                   )}
                 </Box>
 
-                <Typography sx={{ mt: 1, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Preparación</Typography>
-                <Typography sx={{ mt: 0.5, mb: 2, whiteSpace: 'pre-wrap' }}>
+                <Typography sx={{ mt: { xs: 1.5, md: 2 }, fontFamily: 'Roboto, sans-serif', fontWeight: 900, color: '#1A202C', fontSize: { xs: '0.95rem', md: '1rem' } }}>Preparación</Typography>
+                <Typography sx={{ mt: 1, mb: 2, whiteSpace: 'pre-wrap', color: '#718096', fontFamily: 'Open Sans, sans-serif', fontSize: { xs: '0.875rem', md: '1rem' } }}>
                   {truncateText(currentRecipe.preparacion || currentRecipe.descripcion || '', 120)}
                 </Typography>
 
                 {/* Botón Ver Receta Completa */}
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ mt: { xs: 2, md: 3 }, display: 'flex', justifyContent: 'center' }}>
                   <Button
                     variant="contained"
                     startIcon={<VisibilityIcon />}
                     onClick={() => handleOpenReceta(currentRecipe)}
                     sx={{
-                      backgroundColor: '#99682E',
+                      background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
                       color: 'white',
-                      fontFamily: 'Lato, sans-serif',
+                      fontFamily: 'Roboto, sans-serif',
                       fontWeight: 700,
-                      px: 4,
-                      py: 1,
+                      px: { xs: 3, md: 5 },
+                      py: { xs: 1, md: 1.5 },
+                      borderRadius: 50,
+                      boxShadow: '0 4px 12px rgba(240, 147, 251, 0.3)',
+                      fontSize: { xs: '0.875rem', md: '1rem' },
                       '&:hover': {
-                        backgroundColor: '#7a5424'
+                        background: 'linear-gradient(135deg, #F5576C 0%, #F093FB 100%)',
+                        boxShadow: '0 6px 16px rgba(240, 147, 251, 0.4)'
                       }
                     }}
                   >
-                    Ver Receta
+                    Ver Receta Completa
                   </Button>
                 </Box>
               </>
@@ -626,7 +855,7 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
               <Typography>Cargando recetas...</Typography>
             )}
           </Box>
-          <Box sx={{ flex: '1 1 50%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+          <Box sx={{ flex: '1 1 100%', md: '1 1 50%', display: { xs: 'none', md: 'flex' }, justifyContent: 'center', alignItems: 'flex-start' }}>
             {currentRecipe ? (
               <Box 
                 component="img" 
@@ -637,7 +866,8 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
                   maxWidth: 624, 
                   height: 352, 
                   objectFit: 'cover', 
-                  borderRadius: 2 
+                  borderRadius: 3,
+                  boxShadow: '0 4px 16px rgba(102, 126, 234, 0.2)'
                 }} 
                 id="recetaDelDiaImg" 
                 onError={(e)=>{ e.target.src='https://placehold.co/624x352?text=No+Image'; }} 
@@ -652,7 +882,7 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
                   maxWidth: 624, 
                   height: 352, 
                   objectFit: 'cover', 
-                  borderRadius: 2 
+                  borderRadius: 3 
                 }} 
               />
             )}
@@ -662,66 +892,250 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
 
       {/* Modal de receta */}
       <Dialog open={openReceta} onClose={handleCloseReceta} fullWidth maxWidth="md">
-        <DialogTitle sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 900 }}>{selectedReceta?.nombre}</DialogTitle>
-        <DialogContent dividers>
-          <Box component="img" src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} alt={selectedReceta?.nombre} onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} sx={{ width: '100%', height: 360, maxHeight: 480, objectFit: 'cover', borderRadius: 1 }} />
-          <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Ingredientes</Typography>
-          <Box component="ul" sx={{ pl: 2, mt: 1, mb: 2 }}>
+        <DialogTitle sx={{ 
+          fontFamily: 'Lato, sans-serif', 
+          fontWeight: 900,
+          color: '#1A202C',
+          fontSize: { xs: '1.5rem', md: '1.75rem' },
+          borderBottom: '3px solid rgba(102, 126, 234, 0.3)',
+          pb: 2
+        }}>
+          {selectedReceta?.nombre}
+          {isAdmin() && (
+            <Typography component="span" sx={{ 
+              ml: 2, 
+              fontSize: '0.9rem', 
+              color: '#718096',
+              fontWeight: 400
+            }}>
+              (ID: {selectedReceta?.idReceta || selectedReceta?.id})
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: { xs: 2, md: 3 } }}>
+          <Box 
+            component="img" 
+            src={selectedReceta?.urlImagen || 'https://placehold.co/800x480'} 
+            alt={selectedReceta?.nombre} 
+            onError={(e)=>{ e.target.src='https://placehold.co/800x480'; }} 
+            sx={{ 
+              width: '100%', 
+              height: { xs: 240, md: 360 }, 
+              maxHeight: 480, 
+              objectFit: 'cover', 
+              borderRadius: 3,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+            }} 
+          />
+          <Typography sx={{ 
+            mt: 3, 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            fontSize: '1.25rem'
+          }}>
+            Ingredientes
+          </Typography>
+          <Box component="ul" sx={{ pl: 3, mt: 1.5, mb: 3 }}>
             {(selectedReceta?.ingredientes || []).map(ingrediente => 
               ingrediente.nombre.split('\n').filter(line => line.trim()).map((line, idx) => (
-                <Box component="li" key={`${ingrediente.idIngrediente}-${idx}`} sx={{ listStyleType: 'disc', ml: 1, fontSize: '0.95rem', color: 'text.secondary', mb: 0.5 }}>
+                <Box 
+                  component="li" 
+                  key={`${ingrediente.idIngrediente}-${idx}`} 
+                  sx={{ 
+                    listStyleType: 'disc', 
+                    ml: 1, 
+                    fontSize: '0.95rem', 
+                    color: '#969696', 
+                    mb: 0.5,
+                    fontFamily: 'Open Sans, sans-serif'
+                  }}
+                >
                   {line.trim()}
                 </Box>
               ))
             )}
           </Box>
-          <Typography sx={{ mt: 2, fontFamily: 'Lato, sans-serif', fontWeight: 700 }}>Preparación</Typography>
-          <Typography sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}>{selectedReceta?.preparacion}</Typography>
-          <Divider sx={{ my: 2 }} />
+          <Typography sx={{ 
+            mt: 3, 
+            fontFamily: 'Roboto, sans-serif', 
+            fontWeight: 900,
+            color: '#99682E',
+            fontSize: '1.25rem'
+          }}>
+            Preparación
+          </Typography>
+          <Typography sx={{ 
+            whiteSpace: 'pre-wrap', 
+            color: '#969696',
+            fontFamily: 'Open Sans, sans-serif',
+            lineHeight: 1.7,
+            mt: 1.5
+          }}>
+            {selectedReceta?.preparacion}
+          </Typography>
+          <Divider sx={{ my: 3 }} />
           
           {/* Botones de interacción con estadísticas */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            flexWrap: 'wrap', 
+            gap: 2,
+            backgroundColor: '#F9E9AE',
+            borderRadius: 2,
+            p: 2
+          }}>
             {/* Botones e interacciones de izquierda */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {/* Botón Me Gusta con contador */}
-              <IconButton aria-label="like" onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}>
-                {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon color="primary" /> : <ThumbUpOutlinedIcon />}
-              </IconButton>
-              <Typography variant="body2" sx={{ fontWeight: 600, mr: 2 }}>
-                {modalStats.likesCount}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton 
+                  aria-label="like" 
+                  onClick={() => handleLike(selectedReceta?.idReceta || selectedReceta?.id)}
+                  sx={{
+                    backgroundColor: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                    color: userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                    '&:hover': {
+                      backgroundColor: '#FA968B',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.likes.has(selectedReceta?.idReceta || selectedReceta?.id) ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
+                </IconButton>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
+                  {modalStats.likesCount}
+                </Typography>
+              </Box>
               
               {/* Botón Estrellas con promedio */}
-              <IconButton aria-label="star" onClick={() => handleOpenRating(selectedReceta?.idReceta || selectedReceta?.id, selectedReceta?.nombre)}>
-                {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon color="warning" /> : <StarBorderIcon />}
-              </IconButton>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {modalStats.avgStars > 0 ? modalStats.avgStars.toFixed(1) : '0.0'}
-                <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontWeight: 400 }}>
-                  ({modalStats.totalStars})
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton 
+                  aria-label="star" 
+                  onClick={() => handleOpenRating(selectedReceta?.idReceta || selectedReceta?.id, selectedReceta?.nombre)}
+                  sx={{
+                    backgroundColor: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#99682E' : 'white',
+                    color: userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#99682E',
+                    '&:hover': {
+                      backgroundColor: '#99682E',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {userInteractions.estrellas.has(selectedReceta?.idReceta || selectedReceta?.id) ? <StarIcon /> : <StarBorderIcon />}
+                </IconButton>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2F4295' }}>
+                  {modalStats.avgStars > 0 ? modalStats.avgStars.toFixed(1) : '0.0'}
+                  <Typography component="span" variant="body2" sx={{ ml: 0.5, color: '#969696', fontWeight: 400 }}>
+                    ({modalStats.totalStars})
+                  </Typography>
                 </Typography>
-              </Typography>
+              </Box>
             </Box>
             
             {/* Botón Favorito a la derecha */}
-            <IconButton aria-label="fav" onClick={() => handleFavorite(selectedReceta?.idReceta || selectedReceta?.id)}>
-              {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon color="error" /> : <BookmarkBorderIcon />}
+            <IconButton 
+              aria-label="fav" 
+              onClick={() => handleFavorite(selectedReceta?.idReceta || selectedReceta?.id)}
+              sx={{
+                backgroundColor: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? '#F75442' : 'white',
+                color: userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? 'white' : '#F75442',
+                '&:hover': {
+                  backgroundColor: '#FA968B',
+                  color: 'white'
+                }
+              }}
+            >
+              {userInteractions.favoritos.has(selectedReceta?.idReceta || selectedReceta?.id) ? <BookmarkIcon /> : <BookmarkBorderIcon />}
             </IconButton>
           </Box>
           
-          <Typography sx={{ fontWeight: 700, mt: 2 }}>Comentarios</Typography>
-          <List>
-            {(comentarios || []).map(c => (
-              <ListItem key={c.idComentario || c.id}><ListItemText primary={c.nombreUsuario || 'Usuario'} secondary={c.texto || c.comentario} /></ListItem>
-            ))}
-          </List>
-          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+          <Typography sx={{ 
+            fontWeight: 900, 
+            mt: 3,
+            fontFamily: 'Roboto, sans-serif',
+            color: '#2F4295',
+            fontSize: '1.15rem'
+          }}>
+            Comentarios
+          </Typography>
+          {comentarios.length === 0 ? (
+            <Typography sx={{ 
+              color: '#718096',
+              fontFamily: 'Open Sans, sans-serif',
+              textAlign: 'center',
+              py: 3,
+              mb: 2
+            }}>
+              No hay comentarios aún. ¡Sé el primero en comentar!
+            </Typography>
+          ) : (
+            <List sx={{ mt: 1, mb: 2 }}>
+              {(comentarios || []).map(c => (
+                <ListItem 
+                  key={c.idComentario || c.id}
+                  sx={{
+                    backgroundColor: '#F9E9AE',
+                    borderRadius: 2,
+                    mb: 1.5,
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  <ListItemText 
+                    primary={
+                      <Typography sx={{ 
+                        fontFamily: 'Open Sans, sans-serif', 
+                        fontWeight: 700,
+                        color: '#1A202C',
+                        fontSize: '0.95rem'
+                      }}>
+                        {c.nombreUsuario || 'Usuario'}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography sx={{ 
+                        fontFamily: 'Open Sans, sans-serif', 
+                        color: '#4A5568',
+                        fontSize: '0.9rem',
+                        mt: 0.5
+                      }}>
+                        {c.comentario || c.texto}
+                      </Typography>
+                    }
+                  />
+                  <Typography variant="caption" sx={{ 
+                    color: '#718096',
+                    fontFamily: 'Open Sans, sans-serif',
+                    mt: 0.5
+                  }}>
+                    {formatFecha(c.fechaCreacion || c.fecha)}
+                  </Typography>
+                </ListItem>
+              ))}
+            </List>
+          )}
+          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
             <TextField 
               size="small" 
               fullWidth 
               placeholder="Escribe un comentario..." 
               value={newComentario} 
-              onChange={(e)=> setNewComentario(e.target.value)} 
+              onChange={(e)=> setNewComentario(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 50,
+                  backgroundColor: 'white',
+                  '&:hover fieldset': {
+                    borderColor: '#F75442'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#F75442'
+                  }
+                }
+              }}
             />
             <Button 
               size="small" 
@@ -740,13 +1154,32 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
                   console.error('Error posting comment:', e);
                 } 
               }}
+              sx={{
+                background: 'linear-gradient(135deg, #F75442 0%, #FA968B 100%)',
+                borderRadius: 50,
+                px: 3,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FA968B 0%, #F75442 100%)'
+                }
+              }}
             >
               Enviar
             </Button>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseReceta}>Cerrar</Button>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={handleCloseReceta}
+            sx={{
+              color: '#2F4295',
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: '#F9E9AE'
+              }
+            }}
+          >
+            Cerrar
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -766,27 +1199,264 @@ import { Link as RouterLink } from 'react-router-dom';export default function Ho
 
 function PaisesPreview(){
   const [paises, setPaises] = useState([]);
+  const carouselRef = useRef(null);
 
   useEffect(()=>{
-    getPaises().then(r=> setPaises(Array.isArray(r.data)? r.data.slice(0,8) : [])).catch(()=>{});
+    getPaises().then(r=> setPaises(Array.isArray(r.data)? r.data.slice(0,12) : [])).catch(()=>{});
   },[]);
 
+  useEffect(() => {
+    if (paises.length > 0 && carouselRef.current) {
+      const $carousel = $(carouselRef.current);
+      
+      // Destruir carrusel anterior si existe
+      if ($carousel.hasClass('owl-loaded')) {
+        $carousel.trigger('destroy.owl.carousel');
+      }
+
+      // Inicializar OwlCarousel
+      $carousel.owlCarousel({
+        loop: true,
+        margin: 8,
+        nav: true,
+        navText: [
+          '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
+          '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>'
+        ],
+        dots: true,
+        autoplay: true,
+        autoplayTimeout: 5000,
+        autoplayHoverPause: true,
+        responsive: {
+          0: {
+            items: 1,
+            nav: true
+          },
+          600: {
+            items: 2,
+            nav: true
+          },
+          1000: {
+            items: 3,
+            nav: true
+          }
+        }
+      });
+
+      // Cleanup
+      return () => {
+        if ($carousel.hasClass('owl-loaded')) {
+          $carousel.trigger('destroy.owl.carousel');
+        }
+      };
+    }
+  }, [paises]);
+
+  if (paises.length === 0) {
+    return (
+      <Box sx={{ 
+        textAlign: 'center', 
+        py: 8,
+        color: '#718096',
+        fontFamily: 'Open Sans, sans-serif'
+      }}>
+        No hay países disponibles
+      </Box>
+    );
+  }
+
   return (
-    <>
-      {paises.map(p=> (
-        <Box key={p.idPais} sx={{ textAlign: 'center', p: 1, boxSizing: 'border-box', width: { xs: '50%', sm: '50%', md: '25%' }, display: 'inline-block' }}>
-          <RouterLink to={`/paises/${p.idPais}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            {p.urlImagen ? (
-              <Box component="img" src={p.urlImagen} alt={p.nombre} sx={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }} />
-            ) : (
-              <Box sx={{ width: '100%', height: 120, backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1 }}>
-                <Box component="img" src="https://placehold.co/300x200?text=No+Image" alt="placeholder" sx={{ maxWidth: '100%', maxHeight: '100%' }} />
+    <Box sx={{ 
+      position: 'relative',
+      width: '100%',
+      py: 4,
+      '& .owl-carousel': {
+        position: 'relative'
+      },
+      '& .owl-item': {
+        backgroundColor: 'transparent !important',
+        display: 'flex !important',
+        alignItems: 'center !important',
+        justifyContent: 'center !important'
+      },
+      '& .owl-item img': {
+        width: '264px !important',
+        height: '198px !important',
+        maxWidth: '264px !important',
+        maxHeight: '198px !important',
+        '@media (min-width: 600px)': {
+          width: '317px !important',
+          height: '238px !important',
+          maxWidth: '317px !important',
+          maxHeight: '238px !important'
+        },
+        '@media (min-width: 1000px)': {
+          width: '370px !important',
+          height: '277px !important',
+          maxWidth: '370px !important',
+          maxHeight: '277px !important'
+        }
+      },
+      '& .owl-nav': {
+        position: 'absolute',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        pointerEvents: 'none',
+        zIndex: 10,
+        margin: 0
+      },
+      '& .owl-nav button': {
+        pointerEvents: 'auto',
+        background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%) !important',
+        color: 'white !important',
+        width: '50px !important',
+        height: '50px !important',
+        borderRadius: '50% !important',
+        display: 'flex !important',
+        alignItems: 'center !important',
+        justifyContent: 'center !important',
+        transition: 'all 0.3s ease !important',
+        border: 'none !important',
+        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4) !important',
+        fontSize: '0 !important',
+        margin: '0 !important',
+        '&:hover': {
+          background: 'linear-gradient(135deg, #764BA2 0%, #667EEA 100%) !important',
+          transform: 'scale(1.15) !important'
+        },
+        '& svg': {
+          width: '24px !important',
+          height: '24px !important'
+        }
+      },
+      '& .owl-prev': {
+        left: { xs: '-5px', md: '0px' },
+        position: 'relative !important'
+      },
+      '& .owl-next': {
+        right: { xs: '-5px', md: '0px' },
+        position: 'relative !important'
+      },
+      '& .owl-dots': {
+        textAlign: 'center',
+        marginTop: '24px !important'
+      },
+      '& .owl-dot': {
+        display: 'inline-block !important',
+        margin: '0 4px !important'
+      },
+      '& .owl-dot span': {
+        width: '10px !important',
+        height: '10px !important',
+        borderRadius: '50% !important',
+        backgroundColor: 'rgba(102, 126, 234, 0.3) !important',
+        display: 'block !important',
+        transition: 'all 0.3s ease !important',
+        cursor: 'pointer !important',
+        margin: '0 !important',
+        '&:hover': {
+          backgroundColor: '#667EEA !important',
+          transform: 'scale(1.3) !important'
+        }
+      },
+      '& .owl-dot.active span': {
+        backgroundColor: '#667EEA !important'
+      },
+      '& .owl-stage-outer': {
+        overflow: 'hidden'
+      },
+      '& .owl-item': {
+        backgroundColor: 'transparent !important'
+      },
+      '& .owl-stage': {
+        backgroundColor: 'transparent !important'
+      }
+    }}>
+      <div className="owl-carousel owl-theme" ref={carouselRef}>
+        {paises.map((pais) => (
+          <Box
+            key={pais.idPais}
+            component={RouterLink}
+            to={`/paises/${pais.idPais}`}
+            sx={{
+              position: 'relative',
+              height: { xs: 260, sm: 320, md: 380 },
+              width: '100%',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              display: 'flex !important',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.4s ease',
+              backgroundColor: 'transparent !important',
+              '&:hover': {
+                transform: 'scale(1.03)'
+              }
+            }}
+          >
+            {/* Imagen con tamaño fijo normalizado */}
+            <Box
+              component="img"
+              src={pais.urlImagen || 'https://placehold.co/1200x600?text=No+Image'}
+              alt={pais.nombre}
+              sx={{
+                width: { xs: '264px', sm: '317px', md: '370px' },
+                height: { xs: '198px', sm: '238px', md: '277px' },
+                objectFit: 'contain',
+                objectPosition: 'center',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: { xs: '12px', sm: '16px', md: '20px' },
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                transition: 'transform 0.4s ease'
+              }}
+            />
+
+            {/* Contenido - Nombre del país */}
+            <Box sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              pb: 3,
+              px: 2,
+              pointerEvents: 'none'
+            }}>
+              <Box
+                sx={{
+                  backgroundColor: 'rgba(102, 126, 234, 0.95)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: 50,
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 1, md: 1.5 },
+                  boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
+                  transition: 'all 0.3s ease',
+                  pointerEvents: 'auto'
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: 'white',
+                    fontFamily: 'Lato, sans-serif',
+                    fontWeight: 900,
+                    fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' },
+                    textAlign: 'center',
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                  }}
+                >
+                  {pais.nombre}
+                </Typography>
               </Box>
-            )}
-            <Typography sx={{ fontFamily: 'Lato, sans-serif', fontWeight: 700, mt: 1 }}>{p.nombre}</Typography>
-          </RouterLink>
-        </Box>
-      ))}
-    </>
+            </Box>
+          </Box>
+        ))}
+      </div>
+    </Box>
   );
 }
