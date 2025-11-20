@@ -281,10 +281,16 @@ export const verifyDonation = async (sessionId) => {
     throw new Error('Debes iniciar sesión');
   }
   
-  return api.get(`/donaciones/verify/${sessionId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    timeout: 5000 // ⬅️ Agregado timeout de 5 segundos
-  });
+  return api.post('/donaciones/verify-session', 
+    { sessionId },
+    {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000 // 10 segundos para la verificación con Stripe
+    }
+  );
 };
 
 // Usuarios

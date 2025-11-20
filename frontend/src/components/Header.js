@@ -33,12 +33,16 @@ import Grid from '@mui/material/Grid';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import UserSidebar from './UserSidebar';
+import AuthPromptDialog from './AuthPromptDialog';
+import DonationAmountDialog from './DonationAmountDialog';
 import { isAuthenticated, isAdmin, createDonationSession, getPaises, getCategorias } from '../api';
 
 export default function Header(){
   const [q, setQ] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [donationDialogOpen, setDonationDialogOpen] = useState(false);
   const [isAuthLocal, setIsAuthLocal] = useState(isAuthenticated());
   const [isAdminLocal, setIsAdminLocal] = useState(isAdmin());
   const [paisesMenuOpen, setPaisesMenuOpen] = useState(false);
@@ -126,13 +130,17 @@ export default function Header(){
 
   const handleDonate = async () => {
     if (!isAuthLocal) {
-      alert('Debes iniciar sesión para donar');
-      navigate('/login');
+      setAuthPromptOpen(true);
       return;
     }
 
+    // Abrir modal de selección de monto
+    setDonationDialogOpen(true);
+  };
+
+  const handleDonationConfirm = async (amount) => {
     try {
-      const response = await createDonationSession(100); // Monto en centavos: $0.50 USD (mínimo de Stripe)
+      const response = await createDonationSession(amount);
       
       // Si hay URL de Stripe, redirigir a la sesión de pago
       if (response.data && response.data.url) {
@@ -142,11 +150,13 @@ export default function Header(){
       else if (response.data && response.data.donacion) {
         const message = response.data.note || 'Donación registrada. Stripe no está configurado en el servidor.';
         alert(`✅ ${message}\n\nDonación ID: ${response.data.donacion.idDonacion}\nMonto: $${response.data.donacion.amount} ${response.data.donacion.currency}`);
+        setDonationDialogOpen(false);
       }
     } catch (error) {
       console.error('Error al crear sesión de donación:', error);
       const errorMsg = error.response?.data?.mensaje || error.message || 'Error al procesar la donación.';
       alert(`❌ ${errorMsg}`);
+      setDonationDialogOpen(false);
     }
   };
 
@@ -766,6 +776,17 @@ export default function Header(){
           setIsAdminLocal(false);
           navigate('/');
         }} 
+      />
+
+      <AuthPromptDialog 
+        open={authPromptOpen} 
+        onClose={() => setAuthPromptOpen(false)} 
+      />
+
+      <DonationAmountDialog
+        open={donationDialogOpen}
+        onClose={() => setDonationDialogOpen(false)}
+        onConfirm={handleDonationConfirm}
       />
     </>
   );

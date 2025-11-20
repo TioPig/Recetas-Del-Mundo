@@ -68,7 +68,7 @@ export default function AuthPromptDialog({ open, onClose }){
                   mb: 2
                 }}
               >
-                Para usar <strong style={{ color: '#667EEA' }}>favoritos, me gusta, estrellas y comentarios</strong> debes iniciar sesión o crear una cuenta.
+                Para apoyar a <strong style={{ color: '#667EEA' }}>Recetas del Mundo y tus recetas favoritas</strong> debes iniciar sesión o crear una cuenta.
               </Typography>
               <Typography 
                 variant="caption" 

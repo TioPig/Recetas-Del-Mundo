@@ -45,16 +45,63 @@ export default function DonacionSuccess() {
         const response = await verifyDonation(sessionId);
         
         if (response.data) {
-          setDonationData(response.data);
+          // La respuesta del backend puede contener: { session, donacion, sesion_pago }
+          const { donacion, session } = response.data;
+          
+          if (donacion) {
+            // Usar los datos reales de la donación desde el backend
+            setDonationData({
+              status: 'success',
+              message: 'Tu donación ha sido procesada exitosamente',
+              sessionId: sessionId,
+              idDonacion: donacion.idDonacion || donacion.id_donacion || sessionId,
+              monto: donacion.amount ? donacion.amount / 100 : 0, // Convertir centavos a dólares
+              moneda: donacion.currency?.toUpperCase() || 'USD',
+              fecha: donacion.fechaCreacion || donacion.fecha_creacion || new Date().toISOString(),
+              estado: donacion.status === 'PAID' ? 'completado' : donacion.status?.toLowerCase() || 'completado',
+              stripePaymentIntent: donacion.stripePaymentIntent || donacion.stripe_payment_intent
+            });
+
+            // Limpiar sessionStorage después de verificación exitosa
+            try {
+              sessionStorage.removeItem('lastDonationAmount');
+              sessionStorage.removeItem('lastDonationDate');
+            } catch (e) {
+              console.warn('No se pudo limpiar sessionStorage:', e);
+            }
+          } else {
+            setError('No se pudo obtener los detalles de la donación');
+          }
         } else {
           setError('No se pudo verificar la donación');
         }
       } catch (err) {
         console.error('Error al verificar donación:', err);
         
-        // Si el endpoint no existe, usar los datos de la URL y Stripe
-        // Convertir centavos a dólares (el backend envía en centavos)
-        const amountInDollars = amountParam ? parseFloat(amountParam) / 100 : 0.50;
+        // Si el endpoint falla, usar datos guardados en sessionStorage o URL como fallback
+        let amountInDollars;
+        let donationDate;
+
+        // Intentar obtener de sessionStorage primero (más confiable)
+        try {
+          const savedAmount = sessionStorage.getItem('lastDonationAmount');
+          const savedDate = sessionStorage.getItem('lastDonationDate');
+          
+          if (savedAmount) {
+            amountInDollars = parseFloat(savedAmount) / 100;
+            donationDate = savedDate || new Date().toISOString();
+          } else if (amountParam) {
+            // Fallback a URL parameter
+            amountInDollars = parseFloat(amountParam) / 100;
+            donationDate = new Date().toISOString();
+          } else {
+            amountInDollars = 0.50;
+            donationDate = new Date().toISOString();
+          }
+        } catch (e) {
+          amountInDollars = amountParam ? parseFloat(amountParam) / 100 : 0.50;
+          donationDate = new Date().toISOString();
+        }
         
         setDonationData({ 
           status: 'success',
@@ -63,16 +110,19 @@ export default function DonacionSuccess() {
           idDonacion: sessionId,
           monto: amountInDollars,
           moneda: 'USD',
-          fecha: new Date().toISOString(),
+          fecha: donationDate,
           estado: 'completado'
         });
+        
+        // Mostrar advertencia pero no bloquear la UX
+        setError('No se pudo verificar con el servidor, pero tu pago fue procesado por Stripe');
       } finally {
         setLoading(false);
       }
     };
 
     fetchDonationDetails();
-  }, [sessionId, amountParam]); // ⬅️ Agregar amountParam a las dependencias
+  }, [sessionId, amountParam]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -99,7 +149,10 @@ export default function DonacionSuccess() {
       <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
         <CircularProgress size={60} sx={{ color: '#667EEA' }} />
         <Typography variant="h6" sx={{ mt: 3, color: '#4A5568', fontFamily: 'Open Sans, sans-serif' }}>
-          Verificando tu donación...
+          Verificando tu donación con Stripe...
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 1, color: '#718096', fontFamily: 'Open Sans, sans-serif' }}>
+          Esto puede tomar unos segundos
         </Typography>
       </Container>
     );
@@ -155,7 +208,7 @@ export default function DonacionSuccess() {
       <Container maxWidth="md">
         {error && (
           <Alert 
-            severity="warning" 
+            severity={error.includes('servidor') ? 'warning' : 'info'}
             sx={{ 
               mb: 3,
               borderRadius: 2,
@@ -163,215 +216,434 @@ export default function DonacionSuccess() {
               fontFamily: 'Open Sans, sans-serif'
             }}
           >
-            {error}
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+              {error.includes('servidor') ? '⚠️ Información parcial' : 'ℹ️ Nota'}
+            </Typography>
+            <Typography variant="body2">
+              {error}
+            </Typography>
           </Alert>
         )}
 
-        {/* Detalles de la Donación */}
+        {/* Baucher de Donación */}
         {donationData && (
           <Paper
             elevation={0}
             sx={{
               mb: 4,
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: 3,
-              boxShadow: '0 4px 20px rgba(102, 126, 234, 0.1)',
-              overflow: 'hidden'
+              border: '2px solid #E2E8F0',
+              borderRadius: 2,
+              overflow: 'hidden',
+              boxShadow: '0 8px 30px rgba(102, 126, 234, 0.15)'
             }}
           >
+            {/* Header del Baucher */}
             <Box 
               sx={{ 
-                background: 'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+                background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
                 p: 3,
                 textAlign: 'center'
               }}
             >
+              <ReceiptIcon sx={{ fontSize: 40, color: 'rgba(255, 255, 255, 0.9)', mb: 1 }} />
               <Typography 
-                variant="h5" 
+                variant="overline" 
                 sx={{ 
-                  color: '#FFFFFF', 
-                  fontFamily: 'Lato, sans-serif',
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontFamily: 'Open Sans, sans-serif',
                   fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  fontSize: { xs: '1.3rem', md: '1.5rem' }
+                  letterSpacing: 3,
+                  fontSize: '0.85rem',
+                  display: 'block'
                 }}
               >
-                <ReceiptIcon /> Resumen de tu Donación
+                RECIBO DE DONACIÓN
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontSize: '0.7rem',
+                  display: 'block',
+                  mt: 0.5
+                }}
+              >
+                Recetas Del Mundo
               </Typography>
             </Box>
 
-            <Box sx={{ p: { xs: 3, md: 4 } }}>
-              <Grid container spacing={3}>
-                {/* Monto */}
-                {donationData.monto && (
-                  <Grid item xs={12} sm={6}>
-                    <Paper 
-                      elevation={0}
-                      sx={{ 
-                        p: 3, 
-                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-                        borderRadius: 2,
-                        border: '2px solid #E2E8F0',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1 }}>
-                        <AttachMoneyIcon sx={{ color: '#667EEA', fontSize: 20 }} />
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: '#4A5568',
-                            fontFamily: 'Open Sans, sans-serif',
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: 0.5
-                          }}
-                        >
-                          Monto
-                        </Typography>
-                      </Box>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
-                          color: '#667EEA', 
-                          fontFamily: 'Lato, sans-serif',
-                          fontWeight: 900,
-                          fontSize: { xs: '1.8rem', md: '2.125rem' }
-                        }}
-                      >
-                        {formatCurrency(donationData.monto, donationData.moneda || 'USD')}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                )}
+            {/* Cuerpo del Baucher */}
+            <Box sx={{ p: { xs: 3, md: 4 }, backgroundColor: '#FFFFFF' }}>
+              
+              {/* Monto Principal */}
+              {donationData.monto && (
+                <Box 
+                  sx={{ 
+                    textAlign: 'center',
+                    py: 4,
+                    mb: 3,
+                    borderBottom: '2px dashed #E2E8F0'
+                  }}
+                >
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#718096',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: 1.5,
+                      display: 'block',
+                      mb: 1.5
+                    }}
+                  >
+                    Monto Total
+                  </Typography>
+                  <Typography 
+                    variant="h1" 
+                    sx={{ 
+                      color: '#667EEA',
+                      fontFamily: 'Lato, sans-serif',
+                      fontWeight: 900,
+                      fontSize: { xs: '3rem', sm: '3.5rem', md: '4rem' },
+                      lineHeight: 1,
+                      mb: 1
+                    }}
+                  >
+                    {formatCurrency(donationData.monto, donationData.moneda || 'USD')}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#A0AEC0',
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      display: 'block'
+                    }}
+                  >
+                    {Math.round(donationData.monto * 100)} centavos {donationData.moneda || 'USD'}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Detalles de la Transacción */}
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: '#718096',
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    fontSize: '0.7rem',
+                    mb: 2,
+                    display: 'block'
+                  }}
+                >
+                  Detalles de la Transacción
+                </Typography>
 
                 {/* Fecha */}
                 {donationData.fecha && (
-                  <Grid item xs={12} sm={6}>
-                    <Paper 
-                      elevation={0}
-                      sx={{ 
-                        p: 3, 
-                        background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%)',
-                        borderRadius: 2,
-                        border: '2px solid #E2E8F0',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 1 }}>
-                        <CalendarTodayIcon sx={{ color: '#F5576C', fontSize: 20 }} />
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: '#4A5568',
-                            fontFamily: 'Open Sans, sans-serif',
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: 0.5
-                          }}
-                        >
-                          Fecha
-                        </Typography>
-                      </Box>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      py: 1.5,
+                      borderBottom: '1px solid #F7FAFC'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarTodayIcon sx={{ color: '#667EEA', fontSize: 18 }} />
                       <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: '#1A202C', 
-                          fontFamily: 'Open Sans, sans-serif',
-                          fontWeight: 600,
-                          fontSize: { xs: '0.9rem', md: '1rem' }
-                        }}
-                      >
-                        {formatDate(donationData.fecha)}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                )}
-
-                {/* ID de Donación */}
-                {donationData.idDonacion && (
-                  <Grid item xs={12}>
-                    <Paper 
-                      elevation={0}
-                      sx={{ 
-                        p: 3, 
-                        backgroundColor: '#F7FAFC',
-                        borderRadius: 2,
-                        border: '2px dashed #667EEA'
-                      }}
-                    >
-                      <Typography 
-                        variant="caption" 
+                        variant="body2" 
                         sx={{ 
                           color: '#4A5568',
                           fontFamily: 'Open Sans, sans-serif',
-                          fontWeight: 600,
-                          mb: 1,
-                          display: 'block',
-                          textTransform: 'uppercase',
-                          letterSpacing: 0.5
+                          fontSize: '0.875rem'
                         }}
                       >
-                        ID de Referencia
+                        Fecha y hora
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#1A202C',
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        textAlign: 'right'
+                      }}
+                    >
+                      {formatDate(donationData.fecha)}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Método de pago */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 1.5,
+                    borderBottom: '1px solid #F7FAFC'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AttachMoneyIcon sx={{ color: '#667EEA', fontSize: 18 }} />
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#4A5568',
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      Método de pago
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Box 
+                      sx={{ 
+                        width: 6, 
+                        height: 6, 
+                        borderRadius: '50%', 
+                        backgroundColor: '#667EEA' 
+                      }} 
+                    />
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#1A202C',
+                        fontFamily: 'Open Sans, sans-serif',
+                        fontWeight: 600,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      Stripe
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Moneda */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 1.5,
+                    borderBottom: '1px solid #F7FAFC'
+                  }}
+                >
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#4A5568',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Moneda
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#1A202C',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {donationData.moneda || 'USD'}
+                  </Typography>
+                </Box>
+
+                {/* Tipo de transacción */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 1.5
+                  }}
+                >
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#4A5568',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Tipo de transacción
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#1A202C',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Donación
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Estado de la transacción */}
+              {donationData.estado && (
+                <Box 
+                  sx={{ 
+                    pt: 3,
+                    borderTop: '2px dashed #E2E8F0',
+                    textAlign: 'center'
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      px: 4,
+                      py: 2,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                      border: '2px solid #48BB78'
+                    }}
+                  >
+                    <CheckCircleIcon sx={{ color: '#48BB78', fontSize: 24 }} />
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: '#38A169',
+                        fontFamily: 'Lato, sans-serif',
+                        fontWeight: 700,
+                        fontSize: '1rem'
+                      }}
+                    >
+                      {donationData.estado === 'completado' ? 'PAGO CONFIRMADO' : donationData.estado.toUpperCase()}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
+              {/* ID de Referencia */}
+              {donationData.idDonacion && (
+                <Box 
+                  sx={{ 
+                    mt: 3,
+                    pt: 3,
+                    borderTop: '1px solid #E2E8F0'
+                  }}
+                >
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#718096',
+                      fontFamily: 'Open Sans, sans-serif',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: 1,
+                      fontSize: '0.65rem',
+                      mb: 1,
+                      display: 'block'
+                    }}
+                  >
+                    ID de Referencia
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#4A5568',
+                      fontFamily: 'monospace',
+                      backgroundColor: '#F7FAFC',
+                      p: 1.5,
+                      borderRadius: 1,
+                      fontSize: '0.75rem',
+                      wordBreak: 'break-all',
+                      border: '1px solid #E2E8F0'
+                    }}
+                  >
+                    {donationData.idDonacion}
+                  </Typography>
+                  
+                  {donationData.stripePaymentIntent && (
+                    <>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: '#718096',
+                          fontFamily: 'Open Sans, sans-serif',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                          fontSize: '0.65rem',
+                          mb: 1,
+                          mt: 2,
+                          display: 'block'
+                        }}
+                      >
+                        Payment Intent ID
                       </Typography>
                       <Typography 
                         variant="body2" 
                         sx={{ 
-                          color: '#718096',
+                          color: '#4A5568',
                           fontFamily: 'monospace',
-                          backgroundColor: '#FFFFFF',
+                          backgroundColor: '#F7FAFC',
                           p: 1.5,
                           borderRadius: 1,
-                          display: 'inline-block',
+                          fontSize: '0.75rem',
+                          wordBreak: 'break-all',
                           border: '1px solid #E2E8F0'
                         }}
                       >
-                        {donationData.idDonacion}
+                        {donationData.stripePaymentIntent}
                       </Typography>
-                    </Paper>
-                  </Grid>
-                )}
-
-                {/* Estado */}
-                {donationData.estado && (
-                  <Grid item xs={12}>
-                    <Paper 
-                      elevation={0}
-                      sx={{ 
-                        p: 2.5, 
-                        background: 'linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%)',
-                        borderRadius: 2,
-                        border: '2px solid #48BB78',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: '#38A169', 
-                          fontFamily: 'Lato, sans-serif',
-                          fontWeight: 700,
-                          fontSize: { xs: '1rem', md: '1.1rem' }
-                        }}
-                      >
-                        ✓ Estado: {donationData.estado === 'completado' ? 'Pago Confirmado' : donationData.estado}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                )}
-              </Grid>
-
-              {sessionId && (
-                <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #E2E8F0', textAlign: 'center' }}>
-                  <Typography variant="caption" sx={{ color: '#A0AEC0', fontFamily: 'monospace' }}>
-                    Session ID: {sessionId.substring(0, 30)}...
-                  </Typography>
+                    </>
+                  )}
                 </Box>
               )}
+            </Box>
+
+            {/* Footer del Baucher */}
+            <Box 
+              sx={{ 
+                p: 2, 
+                backgroundColor: '#F7FAFC',
+                borderTop: '2px solid #E2E8F0',
+                textAlign: 'center'
+              }}
+            >
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: '#718096',
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontSize: '0.7rem',
+                  display: 'block',
+                  mb: 0.5
+                }}
+              >
+                🔒 Transacción segura procesada por Stripe
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: '#A0AEC0',
+                  fontFamily: 'Open Sans, sans-serif',
+                  fontSize: '0.65rem',
+                  fontStyle: 'italic'
+                }}
+              >
+                Conserva este recibo para tus registros
+              </Typography>
             </Box>
           </Paper>
         )}
