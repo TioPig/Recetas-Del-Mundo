@@ -25,14 +25,18 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  ListItemSecondaryAction
+  ListItemSecondaryAction,
+  Rating,
+  TablePagination
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
   Comment as CommentIcon,
-  Kitchen as KitchenIcon
+  Kitchen as KitchenIcon,
+  ThumbUp as ThumbUpIcon,
+  Star as StarIcon
 } from '@mui/icons-material';
 import { 
   adminGetRecetas, 
@@ -43,7 +47,11 @@ import {
   adminDeleteComentario,
   getUserNombre,
   getEstrellaStats,
-  getMeGustaCount
+  getMeGustaCount,
+  adminGetMeGustasByReceta,
+  adminDeleteMeGusta,
+  adminGetEstrellasByReceta,
+  adminDeleteEstrella
 } from '../api';
 
 function AdminRecetas() {
@@ -58,6 +66,10 @@ function AdminRecetas() {
   const [comentarios, setComentarios] = useState([]);
   const [ingredientes, setIngredientes] = useState([]);
   const [recetasStats, setRecetasStats] = useState({});
+  const [likes, setLikes] = useState([]);
+  const [calificaciones, setCalificaciones] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [formData, setFormData] = useState({
     nombre: '',
     urlImagen: '',
@@ -167,6 +179,38 @@ function AdminRecetas() {
       
       setComentarios(comentariosConNombres);
 
+      // Cargar likes de la receta usando endpoint específico por receta
+      try {
+        const likesRes = await adminGetMeGustasByReceta(recetaId);
+        const likesReceta = likesRes.data || [];
+        const likesConNombres = likesReceta.map(like => ({
+          ...like,
+          idUsuario: like.usuario?.idUsr,
+          nombreUsuario: like.usuario?.nombre || 'Usuario'
+        }));
+        setLikes(likesConNombres);
+      } catch (err) {
+        console.error('Error cargando likes:', err);
+        setLikes([]);
+      }
+
+      // Cargar calificaciones de la receta usando endpoint específico por receta
+      try {
+        const estrellasRes = await adminGetEstrellasByReceta(recetaId);
+        const estrellasReceta = estrellasRes.data || [];
+        const estrellasConNombres = estrellasReceta.map(estrella => ({
+          ...estrella,
+          idUsuario: estrella.usuario?.idUsr,
+          nombreUsuario: estrella.usuario?.nombre || 'Usuario',
+          // Normalizar el campo de calificación (puede ser 'valor', 'estrellas' o 'calificacion')
+          valorEstrellas: estrella.valor || estrella.estrellas || estrella.calificacion || 0
+        }));
+        setCalificaciones(estrellasConNombres);
+      } catch (err) {
+        console.error('Error cargando calificaciones:', err);
+        setCalificaciones([]);
+      }
+
       // Cargar ingredientes de la receta misma
       const recetaData = recetas.find(r => r.idReceta === recetaId);
       if (recetaData?.ingredientes) {
@@ -184,6 +228,81 @@ function AdminRecetas() {
       }
     } catch (err) {
       console.error('Error cargando detalles:', err);
+    }
+  };
+
+  const handleDeleteLike = async (id) => {
+    if (!window.confirm('¿Eliminar este like?')) return;
+    try {
+      const response = await adminDeleteMeGusta(id);
+      
+      if (response.data?.exito === false) {
+        setError(response.data?.mensaje || 'Error al eliminar like');
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+      
+      setSuccess('Like eliminado');
+      // Recargar detalles de la receta para actualizar los likes
+      loadRecetaDetails(selectedReceta.idReceta);
+      
+      // Actualizar solo las estadísticas de esta receta específica
+      try {
+        const likesRes = await getMeGustaCount(selectedReceta.idReceta);
+        setRecetasStats(prev => ({
+          ...prev,
+          [selectedReceta.idReceta]: {
+            ...prev[selectedReceta.idReceta],
+            likesCount: likesRes.data?.count || 0
+          }
+        }));
+      } catch (err) {
+        console.error('Error actualizando estadísticas de likes:', err);
+      }
+      
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      const errorMsg = err.response?.data?.mensaje || 'Error al eliminar like';
+      setError(errorMsg);
+      setTimeout(() => setError(null), 5000);
+    }
+  };
+
+  const handleDeleteCalificacion = async (id) => {
+    if (!window.confirm('¿Eliminar esta calificación?')) return;
+    try {
+      const response = await adminDeleteEstrella(id);
+      
+      if (response.data?.exito === false) {
+        setError(response.data?.mensaje || 'Error al eliminar calificación');
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+      
+      setSuccess('Calificación eliminada');
+      // Recargar detalles de la receta para actualizar las calificaciones
+      loadRecetaDetails(selectedReceta.idReceta);
+      
+      // Actualizar solo las estadísticas de esta receta específica
+      try {
+        const estrellasRes = await getEstrellaStats(selectedReceta.idReceta);
+        setRecetasStats(prev => ({
+          ...prev,
+          [selectedReceta.idReceta]: {
+            ...prev[selectedReceta.idReceta],
+            avgStars: estrellasRes.data?.promedio || estrellasRes.data?.avgStars || 0,
+            totalStars: estrellasRes.data?.total || estrellasRes.data?.totalStars || 0
+          }
+        }));
+      } catch (err) {
+        console.error('Error actualizando estadísticas de estrellas:', err);
+      }
+      
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      const errorMsg = err.response?.data?.mensaje || 'Error al eliminar calificación';
+      setError(errorMsg);
+      setTimeout(() => setError(null), 5000);
     }
   };
 
@@ -275,10 +394,22 @@ function AdminRecetas() {
     setFormData(prev => ({
       ...prev,
       [name]: (name === 'estado' || name === 'idCat' || name === 'idPais' || name === 'idUsr') 
-        ? parseInt(value) || '' 
+        ? (value === '' ? '' : parseInt(value))
         : value
     }));
   };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Calcular recetas paginadas
+  const paginatedRecetas = recetas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   if (loading) {
     return (
@@ -314,7 +445,7 @@ function AdminRecetas() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {recetas.map((receta) => (
+            {paginatedRecetas.map((receta) => (
               <TableRow key={receta.idReceta} hover>
                 <TableCell>{receta.idReceta}</TableCell>
                 <TableCell>{receta.nombre}</TableCell>
@@ -381,6 +512,17 @@ function AdminRecetas() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={recetas.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          labelRowsPerPage="Filas por página:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+        />
       </TableContainer>
 
       {/* Dialog para ver detalles */}
@@ -394,10 +536,12 @@ function AdminRecetas() {
         <DialogContent>
           {selectedReceta && (
             <Box>
-              <Tabs value={detailTab} onChange={(e, v) => setDetailTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs value={detailTab} onChange={(e, v) => setDetailTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }} variant="scrollable" scrollButtons="auto">
                 <Tab icon={<VisibilityIcon />} label="Información" />
                 <Tab icon={<KitchenIcon />} label={`Ingredientes (${ingredientes.length})`} />
                 <Tab icon={<CommentIcon />} label={`Comentarios (${comentarios.length})`} />
+                <Tab icon={<ThumbUpIcon />} label={`Likes (${likes.length})`} />
+                <Tab icon={<StarIcon />} label={`Calificaciones (${calificaciones.length})`} />
               </Tabs>
 
               {/* Tab 0: Información */}
@@ -496,6 +640,105 @@ function AdminRecetas() {
                   )}
                 </Box>
               )}
+
+              {/* Tab 3: Likes */}
+              {detailTab === 3 && (
+                <Box sx={{ mt: 3 }}>
+                  {likes.length > 0 ? (
+                    <List>
+                      {likes.map((like) => (
+                        <React.Fragment key={like.idMeGusta}>
+                          <ListItem alignItems="flex-start">
+                            <ListItemText 
+                              primary={
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <ThumbUpIcon color="primary" fontSize="small" />
+                                    <Typography variant="subtitle2">
+                                      {like.nombreUsuario || like.usuario?.nombre || 'Usuario'}
+                                    </Typography>
+                                    <Chip label={`ID Usuario: ${like.idUsuario || like.usuario?.idUsr}`} size="small" variant="outlined" />
+                                  </Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatFecha(like.fechaCreacion)}
+                                  </Typography>
+                                </Box>
+                              }
+                              secondary={
+                                <Typography variant="caption" color="text.secondary">
+                                  ID Like: {like.idMeGusta}
+                                </Typography>
+                              }
+                            />
+                            <ListItemSecondaryAction>
+                              <IconButton edge="end" size="small" color="error" onClick={() => handleDeleteLike(like.idMeGusta)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                          <Divider />
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                      No hay likes
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {/* Tab 4: Calificaciones */}
+              {detailTab === 4 && (
+                <Box sx={{ mt: 3 }}>
+                  {calificaciones.length > 0 ? (
+                    <List>
+                      {calificaciones.map((cal) => (
+                        <React.Fragment key={cal.idEstrella}>
+                          <ListItem alignItems="flex-start">
+                            <ListItemText 
+                              primary={
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="subtitle2">
+                                      {cal.nombreUsuario || cal.usuario?.nombre || 'Usuario'}
+                                    </Typography>
+                                    <Chip label={`ID Usuario: ${cal.idUsuario || cal.usuario?.idUsr}`} size="small" variant="outlined" />
+                                  </Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatFecha(cal.fechaCreacion)}
+                                  </Typography>
+                                </Box>
+                              }
+                              secondary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                  <Rating value={cal.valorEstrellas || cal.valor || cal.estrellas || cal.calificacion || 0} readOnly size="small" />
+                                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                                    ({cal.valorEstrellas || cal.valor || cal.estrellas || cal.calificacion || 0} / 5)
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    · ID: {cal.idEstrella}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                            <ListItemSecondaryAction>
+                              <IconButton edge="end" size="small" color="error" onClick={() => handleDeleteCalificacion(cal.idEstrella)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                          <Divider />
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                      No hay calificaciones
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
@@ -549,6 +792,7 @@ function AdminRecetas() {
                 onChange={handleChange}
                 fullWidth
                 SelectProps={{ native: true }}
+                InputLabelProps={{ shrink: true }}
               >
                 <option value={1}>Activo</option>
                 <option value={0}>Inactivo</option>

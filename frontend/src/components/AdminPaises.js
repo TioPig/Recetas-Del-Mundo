@@ -18,7 +18,8 @@ import {
   DialogActions,
   Button,
   TextField,
-  Fab
+  Fab,
+  TablePagination
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -34,6 +35,8 @@ function AdminPaises() {
   const [success, setSuccess] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedPais, setSelectedPais] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [formData, setFormData] = useState({
     nombre: '',
     urlImagen: '',
@@ -150,6 +153,17 @@ function AdminPaises() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedPaises = paises.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -185,7 +199,7 @@ function AdminPaises() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {paises.map((pais) => (
+            {paginatedPaises.map((pais) => (
               <TableRow key={pais.idPais} hover>
                 <TableCell>{pais.idPais}</TableCell>
                 <TableCell>{pais.nombre}</TableCell>
@@ -224,6 +238,17 @@ function AdminPaises() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={paises.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          labelRowsPerPage="Filas por página:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+        />
       </TableContainer>
 
       {/* Dialog para crear/editar */}

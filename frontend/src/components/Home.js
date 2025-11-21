@@ -1269,7 +1269,6 @@ function PaisesPreview(){
     <Box sx={{ 
       position: 'relative',
       width: '100%',
-      py: 4,
       '& .owl-carousel': {
         position: 'relative'
       },
@@ -1284,6 +1283,10 @@ function PaisesPreview(){
         height: '198px !important',
         maxWidth: '264px !important',
         maxHeight: '198px !important',
+        objectFit: 'fill !important',
+        borderRadius: '12px !important',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1) !important',
+        backgroundColor: 'white !important',
         '@media (min-width: 600px)': {
           width: '317px !important',
           height: '238px !important',
@@ -1405,11 +1408,9 @@ function PaisesPreview(){
               sx={{
                 width: { xs: '264px', sm: '317px', md: '370px' },
                 height: { xs: '198px', sm: '238px', md: '277px' },
-                objectFit: 'contain',
-                objectPosition: 'center',
+                objectFit: 'fill',
                 backgroundColor: 'white',
                 borderRadius: '12px',
-                padding: { xs: '12px', sm: '16px', md: '20px' },
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 transition: 'transform 0.4s ease'
               }}

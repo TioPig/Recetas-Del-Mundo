@@ -237,7 +237,8 @@ export const deleteStarReceta = (estrellaId) => {
 export const getEstrellaStats = (recetaId) => api.get(`/recetas/estrellas/stats/${recetaId}`);
 export const getMeGustaCount = (recetaId) => api.get(`/recetas/megustas/count/${recetaId}`);
 
-export const getUserNombre = (userId) => api.get(`/usuarios/id/${userId}`);
+export const getUserNombre = (userId) => api.get(`/usuarios/${userId}`);
+export const getRecetaNombre = (recetaId) => api.get(`/recetas/${recetaId}`);
 
 export const getComentariosReceta = (recetaId) => api.get(`/recetas/comentarios/receta/${recetaId}`);
 export const postComentarioReceta = (recetaId, textoComentario) => {
@@ -354,7 +355,16 @@ export const adminDeleteCategoria = (id) => api.delete(`/categorias/${id}`);
 
 // Admin - Me Gusta
 export const adminGetMeGustas = () => api.get('/admin/megusta');
+export const adminGetAllMeGusta = adminGetMeGustas; // Alias para obtener todos
 export const adminGetMeGusta = (id) => api.get(`/admin/megusta/${id}`);
+export const adminGetMeGustasByReceta = (recetaId) => {
+  // Como no existe endpoint /admin/megusta/receta/{id}, usamos el general y filtramos
+  return api.get('/admin/megusta').then(response => {
+    const allLikes = response.data || [];
+    const filtered = allLikes.filter(like => like.receta?.idReceta === recetaId);
+    return { ...response, data: filtered };
+  });
+};
 export const adminCreateMeGusta = (data) => api.post('/admin/megusta', data);
 export const adminUpdateMeGusta = (id, data) => api.put(`/admin/megusta/${id}`, data);
 export const adminDeleteMeGusta = (id) => api.delete(`/admin/megusta/${id}`);
@@ -368,7 +378,9 @@ export const adminDeleteFavorito = (id) => api.delete(`/admin/favoritos/${id}`);
 
 // Admin - Estrellas
 export const adminGetEstrellas = () => api.get('/admin/estrellas');
+export const adminGetAllEstrellas = adminGetEstrellas; // Alias para obtener todas
 export const adminGetEstrella = (id) => api.get(`/admin/estrellas/${id}`);
+export const adminGetEstrellasByReceta = (recetaId) => api.get(`/admin/estrellas/receta/${recetaId}`);
 export const adminCreateEstrella = (data) => api.post('/admin/estrellas', data);
 export const adminUpdateEstrella = (id, data) => api.put(`/admin/estrellas/${id}`, data);
 export const adminDeleteEstrella = (id) => api.delete(`/admin/estrellas/${id}`);

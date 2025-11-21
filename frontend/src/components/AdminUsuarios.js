@@ -19,7 +19,8 @@ import {
   DialogActions,
   Button,
   TextField,
-  MenuItem
+  MenuItem,
+  TablePagination
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -36,6 +37,8 @@ function AdminUsuarios() {
   const [success, setSuccess] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUsuario, setSelectedUsuario] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -135,6 +138,17 @@ function AdminUsuarios() {
     }));
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedUsuarios = usuarios.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -167,7 +181,7 @@ function AdminUsuarios() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {usuarios.map((usuario) => (
+            {paginatedUsuarios.map((usuario) => (
               <TableRow key={usuario.idUsr} hover>
                 <TableCell>{usuario.idUsr}</TableCell>
                 <TableCell>{usuario.nombre}</TableCell>
@@ -214,6 +228,17 @@ function AdminUsuarios() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={usuarios.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          labelRowsPerPage="Filas por página:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+        />
       </TableContainer>
 
       {/* Dialog para editar */}
