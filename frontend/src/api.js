@@ -43,11 +43,14 @@ export const formatFecha = (fecha) => {
   }
 };
 
-// Use proxy in development (package.json has proxy config)
-// In production, use /api (nginx proxy handles it)
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? '/api'  // Ruta relativa - el nginx del container hace el proxy
-  : ''; // Empty string uses proxy from package.json
+// Configuración de API adaptable:
+// - En producción (Docker): usa /api (nginx hace proxy a backend:8081)
+// - En desarrollo local: usa http://168.181.187.137/api (servidor remoto sin HTTPS)
+// - Para desarrollo con backend local: cambiar REACT_APP_API_URL a http://localhost:8081
+const API_BASE = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? '/api'  // Producción: ruta relativa, nginx hace proxy
+    : 'http://168.181.187.137/api'); // Desarrollo: servidor remoto por IP
 
 const api = axios.create({
   baseURL: API_BASE,

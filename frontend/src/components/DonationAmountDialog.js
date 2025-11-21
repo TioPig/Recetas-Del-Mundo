@@ -15,11 +15,14 @@ import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import CakeIcon from '@mui/icons-material/Cake';
 
+import EditIcon from '@mui/icons-material/Edit';
+
 const PRESET_AMOUNTS = [
   { value: 100, label: '$1', icon: <LocalCafeIcon />, description: 'Un café' },
   { value: 300, label: '$3', icon: <RestaurantIcon />, description: 'Una comida' },
   { value: 500, label: '$5', icon: <CakeIcon />, description: 'Un postre' },
-  { value: 1000, label: '$10', icon: <FavoriteIcon />, description: 'Gran apoyo' }
+  { value: 1000, label: '$10', icon: <FavoriteIcon />, description: 'Gran apoyo' },
+  { value: 'custom', label: 'Otro', icon: <EditIcon />, description: 'Personalizado' }
 ];
 
 export default function DonationAmountDialog({ open, onClose, onConfirm }) {
@@ -29,9 +32,15 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
   const [loading, setLoading] = useState(false);
 
   const handlePresetClick = (amount) => {
-    setSelectedAmount(amount);
-    setIsCustom(false);
-    setCustomAmount('');
+    if (amount === 'custom') {
+      setIsCustom(true);
+      setCustomAmount('');
+      setSelectedAmount(0);
+    } else {
+      setSelectedAmount(amount);
+      setIsCustom(false);
+      setCustomAmount('');
+    }
   };
 
   const handleCustomChange = (e) => {
@@ -94,7 +103,7 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
       <Box 
         sx={{ 
           background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
-          p: 3,
+          p: { xs: 2, sm: 3 },
           position: 'relative'
         }}
       >
@@ -102,8 +111,8 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
           onClick={onClose}
           sx={{
             position: 'absolute',
-            right: 8,
-            top: 8,
+            right: { xs: 4, sm: 8 },
+            top: { xs: 4, sm: 8 },
             color: 'white',
             '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
           }}
@@ -111,15 +120,17 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
           <CloseIcon />
         </IconButton>
         
-        <Box sx={{ textAlign: 'center', pt: 1 }}>
-          <FavoriteIcon sx={{ fontSize: 48, color: 'white', mb: 1 }} />
+        <Box sx={{ textAlign: 'center', pt: { xs: 0.5, sm: 1 }, pr: { xs: 4, sm: 0 } }}>
+          <FavoriteIcon sx={{ fontSize: { xs: 36, sm: 48 }, color: 'white', mb: { xs: 0.5, sm: 1 } }} />
           <Typography 
             variant="h5" 
             sx={{ 
               color: 'white', 
               fontFamily: 'Lato, sans-serif', 
               fontWeight: 900,
-              mb: 1
+              mb: { xs: 0.5, sm: 1 },
+              fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
+              lineHeight: 1.2
             }}
           >
             Apoya Recetas del Mundo
@@ -130,16 +141,18 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
               color: 'rgba(255, 255, 255, 0.9)', 
               fontFamily: 'Open Sans, sans-serif',
               maxWidth: 400,
-              mx: 'auto'
+              mx: 'auto',
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              px: { xs: 1, sm: 0 }
             }}
           >
-            Tu donación nos ayuda a mantener el sitio funcionando y añadir nuevas funcionalidades
+            Tu donación nos ayuda a mantener el sitio funcionando
           </Typography>
         </Box>
       </Box>
 
       <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ p: { xs: 3, md: 4 } }}>
+        <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
           {/* Montos predefinidos */}
           <Typography 
             variant="subtitle1" 
@@ -154,104 +167,155 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
             Elige un monto
           </Typography>
           
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            {PRESET_AMOUNTS.map((preset) => (
-              <Grid item xs={6} sm={3} key={preset.value}>
-                <Paper
-                  elevation={0}
-                  onClick={() => handlePresetClick(preset.value)}
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    borderColor: selectedAmount === preset.value && !isCustom ? '#667EEA' : '#E2E8F0',
-                    borderRadius: 2,
-                    background: selectedAmount === preset.value && !isCustom 
-                      ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
-                      : '#FFFFFF',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: '#667EEA',
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 8px 16px rgba(102, 126, 234, 0.2)'
-                    }
-                  }}
-                >
-                  <Box sx={{ color: selectedAmount === preset.value && !isCustom ? '#667EEA' : '#718096', mb: 1 }}>
-                    {preset.icon}
-                  </Box>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontFamily: 'Lato, sans-serif',
-                      fontWeight: 900,
-                      color: selectedAmount === preset.value && !isCustom ? '#667EEA' : '#1A202C',
-                      mb: 0.5
+          <Box sx={{ 
+            overflowX: 'auto',
+            mb: 3,
+            pb: 1.5,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 12,
+              width: 40,
+              background: 'linear-gradient(to left, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)',
+              pointerEvents: 'none',
+              display: { xs: 'block', sm: 'none' }
+            },
+            '&::-webkit-scrollbar': {
+              height: 8
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: '#E2E8F0',
+              borderRadius: 10
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#667EEA',
+              borderRadius: 10,
+              border: '2px solid #E2E8F0',
+              '&:hover': {
+                backgroundColor: '#764BA2',
+                border: '2px solid #667EEA'
+              }
+            }
+          }}>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ flexWrap: 'nowrap', minWidth: { xs: 'max-content', sm: 'auto' } }}>
+              {PRESET_AMOUNTS.map((preset) => (
+                <Grid item xs={6} sm={2.4} key={preset.value} sx={{ minWidth: { xs: 140, sm: 'auto' } }}>
+                  <Paper
+                    elevation={0}
+                    onClick={() => handlePresetClick(preset.value)}
+                    sx={{
+                      p: { xs: 1.5, sm: 2 },
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '2px solid',
+                      borderColor: (preset.value === 'custom' && isCustom) || (selectedAmount === preset.value && !isCustom) 
+                        ? '#667EEA' 
+                        : '#E2E8F0',
+                      borderRadius: 2,
+                      background: (preset.value === 'custom' && isCustom) || (selectedAmount === preset.value && !isCustom)
+                        ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+                        : '#FFFFFF',
+                      transition: 'all 0.3s ease',
+                      height: '100%',
+                      '&:hover': {
+                        borderColor: '#667EEA',
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 16px rgba(102, 126, 234, 0.2)'
+                      }
                     }}
                   >
-                    {preset.label}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      color: '#718096',
-                      fontFamily: 'Open Sans, sans-serif',
-                      display: 'block'
-                    }}
-                  >
-                    {preset.description}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+                    <Box sx={{ 
+                      color: (preset.value === 'custom' && isCustom) || (selectedAmount === preset.value && !isCustom) 
+                        ? '#667EEA' 
+                        : '#718096', 
+                      mb: 1
+                    }}>
+                      {preset.icon}
+                    </Box>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontFamily: 'Lato, sans-serif',
+                        fontWeight: 900,
+                        color: (preset.value === 'custom' && isCustom) || (selectedAmount === preset.value && !isCustom) 
+                          ? '#667EEA' 
+                          : '#1A202C',
+                        mb: 0.5,
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                      }}
+                    >
+                      {preset.label}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: '#718096',
+                        fontFamily: 'Open Sans, sans-serif',
+                        display: { xs: 'none', sm: 'block' },
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      {preset.description}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
 
-          {/* Monto personalizado */}
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              mb: 2, 
-              color: '#1A202C',
-              fontFamily: 'Lato, sans-serif',
-              fontWeight: 700,
-              fontSize: '1.1rem'
-            }}
-          >
-            O ingresa un monto personalizado
-          </Typography>
-          
-          <TextField
-            fullWidth
-            value={customAmount}
-            onChange={handleCustomChange}
-            placeholder="5.00"
-            InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
-              sx: {
-                fontFamily: 'Open Sans, sans-serif',
-                fontSize: '1.2rem',
-                fontWeight: 600
-              }
-            }}
-            sx={{
-              mb: 3,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                backgroundColor: isCustom ? 'rgba(102, 126, 234, 0.05)' : '#F7FAFC',
-                '& fieldset': {
-                  borderColor: isCustom ? '#667EEA' : '#E2E8F0',
-                  borderWidth: 2
-                },
-                '&:hover fieldset': {
-                  borderColor: '#667EEA'
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#667EEA'
-                }
-              }
-            }}
-          />
+          {/* Monto personalizado - solo visible si se seleccionó "Otro" */}
+          {isCustom && (
+            <>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  mb: 2, 
+                  color: '#1A202C',
+                  fontFamily: 'Lato, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.1rem'
+                }}
+              >
+                Ingresa tu monto personalizado
+              </Typography>
+              
+              <TextField
+                fullWidth
+                value={customAmount}
+                onChange={handleCustomChange}
+                placeholder="5.00"
+                autoFocus
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  sx: {
+                    fontFamily: 'Open Sans, sans-serif',
+                    fontSize: '1.2rem',
+                    fontWeight: 600
+                  }
+                }}
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                    '& fieldset': {
+                      borderColor: '#667EEA',
+                      borderWidth: 2
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#667EEA'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#667EEA'
+                    }
+                  }
+                }}
+              />
+            </>
+          )}
 
           {/* Resumen */}
           <Paper
@@ -267,7 +331,7 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
             <Box 
               sx={{ 
                 background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 textAlign: 'center'
               }}
             >
@@ -286,13 +350,13 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
             </Box>
 
             {/* Cuerpo del recibo */}
-            <Box sx={{ p: 3, backgroundColor: '#FFFFFF' }}>
+            <Box sx={{ p: { xs: 2, sm: 3 }, backgroundColor: '#FFFFFF' }}>
               
               {/* Monto principal */}
               <Box 
                 sx={{ 
                   textAlign: 'center',
-                  py: 3,
+                  py: { xs: 2, sm: 3 },
                   mb: 2,
                   borderBottom: '2px dashed #E2E8F0'
                 }}
@@ -317,7 +381,7 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
                     color: '#667EEA',
                     fontFamily: 'Lato, sans-serif',
                     fontWeight: 900,
-                    fontSize: { xs: '2.5rem', sm: '3rem' },
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                     lineHeight: 1
                   }}
                 >
@@ -499,10 +563,10 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
                       color: selectedAmount >= 50 ? '#38A169' : '#E53E3E',
                       fontFamily: 'Open Sans, sans-serif',
                       fontWeight: 700,
-                      fontSize: '0.875rem'
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
                   >
-                    {selectedAmount >= 50 ? 'Listo para procesar' : 'Monto mínimo requerido: $0.50'}
+                    {selectedAmount >= 50 ? 'Listo para procesar' : 'Monto mínimo: $0.50'}
                   </Typography>
                 </Box>
               </Box>
