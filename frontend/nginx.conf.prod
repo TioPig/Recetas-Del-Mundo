@@ -1,0 +1,22 @@
+# nginx.conf para PRODUCCIÓN (Linux/Debian)
+# El Nginx del SERVIDOR maneja el proxy al backend, no el contenedor
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Configuración para React Router (SPA)
+    # El Nginx del SERVIDOR se encarga del /api
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # Configuración de compresión
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/json application/javascript;
+}
