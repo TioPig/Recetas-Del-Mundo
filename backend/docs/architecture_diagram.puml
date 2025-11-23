@@ -1,0 +1,66 @@
+@startuml
+title Arquitectura - API Recetas del Mundo
+left to right direction
+scale 0.45
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 36
+skinparam titleFontSize 44
+skinparam componentFontSize 36
+skinparam noteFontSize 31
+skinparam nodesep 25
+skinparam component {
+  BackgroundColor #F8F9FB
+  BorderColor #1B4965
+}
+
+actor "Usuario (Web/Móvil)" as User
+node "Cliente" as Client {
+  [Navegador / App]
+}
+
+node "Reverse Proxy (NGINX)" as Nginx
+
+rectangle "API Gateway / Backend" as Backend {
+  [Spring Boot (API REST)] as API
+}
+
+[Tareas en background] as Worker
+database "Redis (cache/sesiones)" as Redis
+
+' Coloco PostgreSQL justo después del `Backend` para que
+' PlantUML lo sitúe debajo del API y las flechas conecten bien.
+database "PostgreSQL" as PG
+
+rectangle "Servicios externos" as External {
+  [Stripe]
+  [SMTP / Email]
+}
+
+User --> Client : Interacción UI
+Client --> Nginx : HTTPS (TLS)
+Nginx --> API : HTTP (interna) / Proxy
+API -down-> PG : Consultas SQL
+API --> Redis : Cache / sesiones / rate-limit
+API --> External : Pagos y notificaciones
+API --> Worker : Encolar jobs (ej. thumbnails, backups)
+Worker --> PG : Tareas programadas / procesos en lote
+' Nota: las imágenes NO se almacenan en este servidor. Se usan servidores públicos/CDN.
+
+note bottom
+  Componentes clave:
+  - Backend: Spring Boot (`Springboot/`)
+  - Base de datos: PostgreSQL 15
+  - Cache y sesiones: Redis (opcional pero recomendado)
+  - Imágenes: alojadas en servidores públicos / CDN (no se almacenan en el servidor)
+  - TLS/HTTPS: Reverse proxy (NGINX/Traefik) recomendada
+  - Contenedores: Docker Compose disponible
+
+  Nota de despliegue (estado actual en este host):
+  - Contenedores en ejecución: `api-recetas-backend`, `api-recetas-postgres`, `api-recetas-pgadmin`.
+  - `frontend` está definido en `docker-compose.prod.yml`.
+  - `redis`, `nginx` y `worker` se representan en el diagrama como opcionales.
+end note
+
+'' footer removed on request
+
+@enduml

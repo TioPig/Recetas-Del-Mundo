@@ -1,0 +1,16 @@
+@startuml
+title Endpoints - Donaciones
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 25
+skinparam ranksep 30
+scale 1.125
+
+package "Donaciones" {
+  [POST /recetas/donaciones]
+  [POST /admin/donaciones]
+}
+
+''
+
+@enduml

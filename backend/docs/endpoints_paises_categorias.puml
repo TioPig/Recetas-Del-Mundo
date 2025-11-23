@@ -1,0 +1,31 @@
+@startuml
+title Endpoints - Países y Categorías
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 8
+skinparam ranksep 20
+left to right direction
+scale 1.15
+
+package "Países" {
+  [GET /paises]
+  [POST /paises]
+  [GET /paises/{id}]
+  [PUT /paises/{id}]
+  [DELETE /paises/{id}]
+  [GET /paises/nombre/{nombre}]
+}
+
+package "Categorías" {
+  [GET /categorias]
+  [POST /categorias]
+  [GET /categorias/{id}]
+  [PUT /categorias/{id}]
+  [DELETE /categorias/{id}]
+}
+
+note right
+  
+end note
+
+@enduml

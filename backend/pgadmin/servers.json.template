@@ -1,0 +1,16 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "API Recetas PostgreSQL",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "api_recetas_postgres",
+      "Username": "postgres",
+      "Password": "<POSTGRES_PASSWORD>",
+      "SSLMode": "prefer",
+      "SavePassword": true,
+      "Comment": "Base de datos principal del API de Recetas"
+    }
+  }
+}

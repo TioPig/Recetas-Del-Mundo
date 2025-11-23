@@ -1,0 +1,240 @@
+@startuml
+title ER Diagram - API Recetas del Mundo (Actualizado 23 Nov 2025)
+!define primary_key(x) <b><color:blue>x</color></b>
+!define foreign_key(x) <color:green>x</color>
+!define unique(x) <color:orange>x</color>
+
+hide circle
+skinparam linetype ortho
+skinparam backgroundColor #FFFFFF
+skinparam entity {
+  BackgroundColor #E8F4FD
+  BorderColor #2E86AB
+  FontSize 14
+}
+
+' Entities generated from live DB schema
+
+entity "perfil" as perfil {
+  primary_key(id_perfil) : INTEGER
+  --
+  nombre : VARCHAR
+    ' unique(nombre)
+}
+
+entity "usuario" as usuario {
+  primary_key(id_usr) : INTEGER
+  --
+  nombre : VARCHAR
+  apellido : VARCHAR
+  email : VARCHAR
+    ' unique(email)
+  password : VARCHAR
+  estado : SMALLINT
+  fecha_creacion : TIMESTAMP
+  comentario : VARCHAR
+  foreign_key(id_perfil) : INTEGER
+}
+
+entity "categoria" as categoria {
+  primary_key(id_cat) : INTEGER
+  --
+  nombre : VARCHAR
+    ' unique(nombre)
+  url_imagen : VARCHAR
+  estado : SMALLINT
+  fecha_creacion : TIMESTAMP
+  comentario : VARCHAR
+  foreign_key(id_usr) : INTEGER
+}
+
+entity "pais" as pais {
+  primary_key(id_pais) : INTEGER
+  --
+  nombre : VARCHAR
+    ' unique(nombre)
+  url_imagen : VARCHAR
+  estado : SMALLINT
+  fecha_creacion : TIMESTAMP
+  comentario : VARCHAR
+  foreign_key(id_usr) : INTEGER
+}
+
+entity "receta" as receta {
+  primary_key(id_receta) : INTEGER
+  --
+  nombre : VARCHAR
+    ' unique(nombre)
+  url_imagen : VARCHAR
+  ingrediente : TEXT
+  preparacion : TEXT
+  estado : SMALLINT
+  foreign_key(id_cat) : INTEGER
+  foreign_key(id_pais) : INTEGER
+  fecha_creacion : DATE
+  foreign_key(id_usr) : INTEGER
+  visitas : INTEGER
+}
+
+entity "ingrediente" as ingrediente {
+  primary_key(id_ingrediente) : INTEGER
+  --
+  nombre : TEXT
+    ' unique(nombre)
+  foreign_key(id_receta) : INTEGER
+}
+
+entity "comentario" as comentario {
+  primary_key(id_comentario) : INTEGER
+  --
+  fecha_creacion : TIMESTAMP
+  foreign_key(id_receta) : INTEGER
+  texto : VARCHAR
+  foreign_key(id_usr) : INTEGER
+}
+
+entity "me_gusta" as me_gusta {
+  primary_key(id_megusta) : INTEGER
+  --
+  fecha_creacion : TIMESTAMP
+  ' unique(id_receta, id_usr)
+  foreign_key(id_receta) : INTEGER
+  foreign_key(id_usr) : INTEGER
+}
+
+entity "favorito" as favorito {
+  primary_key(id_fav) : INTEGER
+  --
+  fecha_creacion : TIMESTAMP
+  ' unique(id_usr, id_receta)
+  foreign_key(id_receta) : INTEGER
+  foreign_key(id_usr) : INTEGER
+}
+
+entity "estrella" as estrella {
+  primary_key(id_estrella) : INTEGER
+  --
+  valor : SMALLINT
+  fecha_creacion : TIMESTAMP
+  foreign_key(id_receta) : INTEGER
+  foreign_key(id_usr) : INTEGER
+}
+
+entity "receta_del_dia" as receta_del_dia {
+  primary_key(fecha) : DATE
+  --
+  foreign_key(id_receta) : INTEGER
+}
+
+entity "sesion_pago" as sesion_pago {
+  primary_key(id_sesion) : INTEGER
+  --
+  session_id : VARCHAR
+    ' unique(session_id)
+  provider : VARCHAR
+  status : VARCHAR
+  foreign_key(id_donacion) : INTEGER
+  metadata : JSONB
+  fecha_creacion : TIMESTAMP
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "donacion" as donacion {
+  primary_key(id_donacion) : INTEGER
+  --
+  amount : INTEGER
+  currency : VARCHAR
+  fecha_actualizacion : TIMESTAMP
+  fecha_creacion : TIMESTAMP
+  foreign_key(id_receta) : INTEGER
+  foreign_key(id_usr) : INTEGER
+  status : VARCHAR
+  stripe_payment_intent : VARCHAR
+  stripe_session_id : VARCHAR
+}
+
+ ' === RELACIONES (derivadas de FOREIGN KEYS) ===
+ ' Relationship format: parent ||--o{ child : "fk_column"
+
+ usuario ||--o{ categoria : "id_usr"
+ receta ||--o{ comentario : "id_receta"
+ usuario ||--o{ comentario : "id_usr"
+ receta ||--o{ donacion : "id_receta"
+ usuario ||--o{ donacion : "id_usr"
+ receta ||--o{ estrella : "id_receta"
+ usuario ||--o{ estrella : "id_usr"
+ receta ||--o{ favorito : "id_receta"
+ usuario ||--o{ favorito : "id_usr"
+ receta ||--o{ ingrediente : "id_receta"
+ receta ||--o{ me_gusta : "id_receta"
+ usuario ||--o{ me_gusta : "id_usr"
+ usuario ||--o{ pais : "id_usr"
+ categoria ||--o{ receta : "id_cat"
+ pais ||--o{ receta : "id_pais"
+ usuario ||--o{ receta : "id_usr"
+ donacion ||--o{ sesion_pago : "id_donacion"
+ perfil ||--o{ usuario : "id_perfil"
+receta ||--o{ receta_del_dia : "id_receta"
+
+note top of receta
+  **Entidad Principal**
+  - Columnas y claves derivadas de la BD PostgreSQL
+  - Relaciones 1:N con ingredientes, comentarios, interacciones
+end note
+
+note right
+  == Leyenda: Claves e Índices ==
+  * Primary Keys:
+    - categoria.id_cat
+    - comentario.id_comentario
+    - donacion.id_donacion
+    - estrella.id_estrella
+    - favorito.id_fav
+    - ingrediente.id_ingrediente
+    - me_gusta.id_megusta
+    - pais.id_pais
+    - perfil.id_perfil
+    - receta.id_receta
+    - receta_del_dia.fecha
+    - sesion_pago.id_sesion
+    - usuario.id_usr
+
+  * Unique / Índices relevantes:
+    - categoria(nombre)
+    - ingrediente(lower(TRIM(nombre)))
+    - favorito(id_usr, id_receta)
+    - me_gusta(id_receta, id_usr)
+    - pais(nombre)
+    - perfil(nombre)
+    - receta(nombre)
+    - usuario(email)
+    - sesion_pago(session_id)
+
+  * Foreign Keys (child.column -> parent.column) : constraint_name
+    - categoria.id_usr -> usuario.id_usr : categoria_id_usr_fkey
+    - comentario.id_receta -> receta.id_receta : comentario_receta_fkey
+    - comentario.id_usr -> usuario.id_usr : comentario_usuario_fkey
+    - donacion.id_receta -> receta.id_receta : donacion_id_receta_fk
+    - donacion.id_usr -> usuario.id_usr : donacion_id_usr_fk
+    - estrella.id_receta -> receta.id_receta : fkrxcbprpobmiqkdxmoo32ylkld
+    - estrella.id_usr -> usuario.id_usr : fkfey8w00kt60dhi2c4i96dj4b2
+    - favorito.id_receta -> receta.id_receta : fkh7xyncd05syjb4qbrc87i0da2
+    - favorito.id_usr -> usuario.id_usr : fkrq0y1oifowf2v3iu8mtqqidvs
+    - ingrediente.id_receta -> receta.id_receta : fk_ingrediente_receta
+    - me_gusta.id_usr -> usuario.id_usr : fklt9disbee9m0fbsu33vxh7qdy
+    - me_gusta.id_receta -> receta.id_receta : fkeu6k9bc9cdoikmwh3xc81oy48
+    - pais.id_usr -> usuario.id_usr : pais_id_usr_fkey
+    - receta.id_cat -> categoria.id_cat : receta_id_cat_fkey
+    - receta.id_pais -> pais.id_pais : receta_id_pais_fkey
+    - receta.id_usr -> usuario.id_usr : receta_id_usr_fkey
+    - sesion_pago.id_donacion -> donacion.id_donacion : fk_sesion_pago_donacion
+    - usuario.id_perfil -> perfil.id_perfil : usuario_id_perfil_fk
+end note
+
+footer
+  **API Recetas del Mundo v2.0**
+  Actualizado: 23 Noviembre 2025
+  Base de Datos: PostgreSQL (extraído desde contenedor Docker)
+end footer
+
+@enduml

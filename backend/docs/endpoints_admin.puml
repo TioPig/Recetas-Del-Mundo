@@ -1,0 +1,66 @@
+@startuml
+title Endpoints - Admin
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 8
+skinparam ranksep 20
+left to right direction
+scale 1.15
+
+package "Admin - Perfil" {
+  [GET /admin/perfil]
+  [POST /admin/perfil]
+  [GET /admin/perfil/{id}]
+  [PUT /admin/perfil/{id}]
+  [DELETE /admin/perfil/{id}]
+}
+
+package "Admin - Me Gusta" {
+  [GET /admin/megusta]
+  [POST /admin/megusta]
+  [GET /admin/megusta/{id}]
+  [PUT /admin/megusta/{id}]
+  [DELETE /admin/megusta/{id}]
+  [POST /admin/megusta/toggle]
+  [GET /admin/megusta/receta/{recetaId}/count]
+}
+
+package "Admin - Favoritos" {
+  [GET /admin/favoritos]
+  [POST /admin/favoritos]
+  [GET /admin/favoritos/{id}]
+  [PUT /admin/favoritos/{id}]
+  [DELETE /admin/favoritos/{id}]
+}
+
+package "Admin - Estrellas" {
+  [GET /admin/estrellas]
+  [POST /admin/estrellas]
+  [GET /admin/estrellas/{id}]
+  [PUT /admin/estrellas/{id}]
+  [DELETE /admin/estrellas/{id}]
+  [GET /admin/estrellas/receta/{recetaId}]
+  [GET /admin/estrellas/receta/{recetaId}/promedio]
+}
+
+package "Admin - Comentarios" {
+  [GET /admin/comentarios]
+  [POST /admin/comentarios]
+  [GET /admin/comentarios/{id}]
+  [PUT /admin/comentarios/{id}]
+  [DELETE /admin/comentarios/{id}]
+}
+
+package "Admin - Ingredientes" {
+  [GET /admin/ingredientes]
+  [POST /admin/ingredientes]
+  [GET /admin/ingredientes/{id}]
+  [PUT /admin/ingredientes/{id}]
+  [DELETE /admin/ingredientes/{id}]
+}
+
+note right
+  
+end note
+
+@enduml
