@@ -120,8 +120,7 @@ Contribución y estilo
 ----------------------
 
 Por favor, antes de abrir un Pull Request:
-- Ejecutar linters y pruebas (si aplican).
-- Mantener el estilo del repositorio y documentar cambios en `README.md`.
+Mantener el estilo del repositorio y documentar cambios en `README.md`.
 
 Contacto
 --------
@@ -132,7 +131,7 @@ Licencia
 --------
 
 Este repositorio se distribuye bajo la licencia MIT (si desea otra, actualizar aquí).
-# 🍽️ API Recetas del Mundo — Resumen ejecutivo y guía técnica
+# 🍽️ API Recetas del Mundo
 
 Versión profesional del README, alineada con la presentación técnica en `docs/presentation_architecture.html`. Este documento está pensado para CTOs, equipos DevOps e inversores: resume la propuesta de valor, arquitectura, operaciones críticas y cómo arrancar el sistema.
 
