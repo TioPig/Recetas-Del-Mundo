@@ -1,0 +1,58 @@
+@startuml
+title Endpoints - Recetas
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 25
+skinparam ranksep 30
+scale 1.125
+
+package "Recetas" {
+  [GET /recetas]
+  [POST /recetas]
+  [GET /recetas/{id}]
+  [PUT /recetas/{id}]
+  [DELETE /recetas/{id}]
+
+  [GET /recetas/usuario/{usuarioId}]
+  [GET /recetas/trending]
+  [GET /recetas/pais/{idPais}]
+  [GET /recetas/nombre/{nombre}]
+  [GET /recetas/del-dia]
+  [GET /recetas/carrusel]
+
+  [GET /recetas/megusta]
+  [POST /recetas/megusta]
+  [DELETE /recetas/megusta]
+  [PUT /recetas/megusta/{id}]
+
+  [GET /recetas/favoritos]
+  [POST /recetas/favoritos]
+  [DELETE /recetas/favoritos]
+  [PUT /recetas/favoritos/{id}]
+
+  [GET /recetas/estrellas]
+  [POST /recetas/estrellas]
+  [PUT /recetas/estrellas/{id}]
+  [DELETE /recetas/estrellas/{id}]
+
+  [GET /recetas/{id}/ingredientes]
+  [PUT /recetas/{id}/ingredientes]
+  [POST /recetas/{id}/ingredientes]
+  [DELETE /recetas/{idReceta}/ingredientes/{idIngrediente}]
+
+  [GET /recetas/comentarios]
+  [POST /recetas/comentarios]
+  [GET /recetas/comentarios/receta/{id}]
+  [PUT /recetas/comentarios/{id}]
+  [DELETE /recetas/comentarios/{id}]
+
+  [GET /recetas/categoria/{idCategoria}]
+  [GET /recetas/megusta/count/{idReceta}]
+  [GET /recetas/favoritos/count/{idReceta}]
+  [GET /recetas/estrellas/stats/{idReceta}]
+  [POST /recetas/donaciones]
+}
+
+''
+
+@enduml

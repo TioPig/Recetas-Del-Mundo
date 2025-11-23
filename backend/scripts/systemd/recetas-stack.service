@@ -1,0 +1,28 @@
+[Unit]
+Description=Recetas - Start Docker Compose stack
+Wants=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/admin/api-recetas
+# Load environment if present (optional)
+EnvironmentFile=-/home/admin/api-recetas/.env
+# Expose common env available in recetas-stack.service
+Environment=APP_DIR=/home/admin/api-recetas
+Environment=ENV_FILE=/home/admin/api-recetas/.env
+Environment=LOG_FILE=/var/log/recetas-stack.log
+# Wait for docker to be ready before starting
+ExecStartPre=/bin/sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+ExecStart=/bin/bash /home/admin/api-recetas/scripts/start_stack.sh
+ExecStop=/bin/bash /home/admin/api-recetas/scripts/stop_stack.sh
+# Run as root by default (avoid User= if want root). Change if you have a specific service user.
+#User=admin
+#Group=admin
+TimeoutStartSec=120
+StandardOutput=append:/var/log/recetas-stack.log
+StandardError=append:/var/log/recetas-stack.log
+
+[Install]
+WantedBy=multi-user.target
