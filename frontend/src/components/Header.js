@@ -188,7 +188,7 @@ export default function Header(){
             onClick={() => setMobileMenuOpen(true)}
             sx={{ 
               mr: 2, 
-              display: { md: 'none' },
+              display: { lg: 'none' },
               backgroundColor: 'rgba(255,255,255,0.2)',
               '&:hover': { backgroundColor: 'rgba(255,255,255,0.3)' }
             }}
@@ -270,7 +270,7 @@ export default function Header(){
           </Box>
 
           {/* Desktop Menu */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1, position: 'relative' }}>
+          <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1, position: 'relative' }}>
             <Button 
               color="inherit" 
               component={RouterLink} 
@@ -622,7 +622,7 @@ export default function Header(){
           </Box>
 
           {/* Mobile User Avatar/Actions */}
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+          <Box sx={{ display: { xs: 'flex', lg: 'none' }, alignItems: 'center' }}>
             {isAuthLocal ? (
               <IconButton onClick={()=> setSidebarOpen(true)} sx={{ color: 'white' }}>
                 <Avatar alt="user" src="/img/user-cheems.png" sx={{ width: 32, height: 32 }} />
@@ -641,7 +641,7 @@ export default function Header(){
         anchor="left"
         open={mobileMenuOpen}
         onClose={handleMobileMenuClose}
-        sx={{ display: { xs: 'block', md: 'none' } }}
+        sx={{ display: { xs: 'block', lg: 'none' } }}
       >
         <Box sx={{ width: 280 }}>
           {/* Header del Drawer */}
@@ -656,8 +656,8 @@ export default function Header(){
 
           <Divider />
 
-          {/* Search en móvil */}
-          <Box sx={{ p: 2 }}>
+          {/* Search en móvil - solo cuando no se muestra en el header */}
+          <Box sx={{ p: 2, display: { xs: 'block', sm: 'none' } }}>
             <Box component="form" onSubmit={(e) => { submitSearch(e); handleMobileMenuClose(); }}>
               <TextField 
                 fullWidth
@@ -678,7 +678,7 @@ export default function Header(){
             </Box>
           </Box>
 
-          <Divider />
+          <Divider sx={{ display: { xs: 'block', sm: 'none' } }} />
 
           {/* Menu Items */}
           <List>
