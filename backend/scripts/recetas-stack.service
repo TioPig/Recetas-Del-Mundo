@@ -1,0 +1,25 @@
+[Unit]
+Description=Recetas Del Mundo - Docker Compose Stack
+After=docker.service docker.socket network-online.target
+Requires=docker.service docker.socket
+Wants=network-online.target
+
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/admin/api-recetas
+Environment=APP_DIR=/home/admin/api-recetas
+Environment=ENV_FILE=/home/admin/api-recetas/.env
+Environment=LOG_FILE=/var/log/recetas-stack.log
+# Esperar a que docker esté listo antes de ejecutar el start
+ExecStartPre=/bin/sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+ExecStart=/bin/bash /home/admin/api-recetas/scripts/start_stack.sh
+ExecStop=/bin/bash /home/admin/api-recetas/scripts/stop_stack.sh
+TimeoutStartSec=0
+TimeoutStopSec=120
+StandardOutput=append:/var/log/recetas-stack.log
+StandardError=append:/var/log/recetas-stack.log
+
+[Install]
+WantedBy=multi-user.target

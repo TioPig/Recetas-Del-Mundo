@@ -1,0 +1,16 @@
+@startuml
+title Endpoints - Autenticación
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 25
+skinparam ranksep 30
+scale 1.125
+
+package "Autenticación" {
+  [POST /auth/register]
+  [POST /auth/login]
+}
+
+ 
+
+@enduml

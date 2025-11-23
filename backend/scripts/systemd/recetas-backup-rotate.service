@@ -1,0 +1,16 @@
+[Unit]
+Description=Recetas - Backup rotation service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/admin/api-recetas
+Environment=BACKUP_DIR=/home/admin/api-recetas/backups
+Environment=RETENTION_DAYS=14
+ExecStart=/bin/bash /home/admin/api-recetas/scripts/backup_rotate.sh /home/admin/api-recetas/backups 14
+StandardOutput=append:/var/log/recetas-backup-rotate.log
+StandardError=append:/var/log/recetas-backup-rotate.log
+
+[Install]
+WantedBy=multi-user.target
