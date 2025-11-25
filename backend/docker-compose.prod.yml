@@ -38,10 +38,10 @@ services:
       - api-recetas-network
 
   frontend:
-    image: ${FRONTEND_IMAGE:-tiopig1324/recetas-frontend:latest}
+    image: ${FRONTEND_IMAGE:-tiopig1324/recetas-del-mundo:frontend-latest}
     container_name: recetas-frontend
     ports:
-      - "80:80"
+      - "3000:80"
     networks:
       - api-recetas-network
     restart: unless-stopped

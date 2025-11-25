@@ -85,24 +85,30 @@ api.interceptors.response.use((response) => {
   }
   return response;
 }, (err) => {
-  // Detectar token expirado o inválido
+  // Detectar SOLO token expirado o inválido (no errores de permisos)
   if (err.response) {
     const { status, data } = err.response;
     
-    // Verificar si es un error de autenticación
-    const isAuthError = status === 401 || status === 403;
+    // Solo verificar si el mensaje indica explícitamente problema con el token
     const hasTokenError = data && (
       (typeof data === 'object' && data.error && 
         (data.error.toLowerCase().includes('token') || 
          data.error.toLowerCase().includes('expired') ||
-         data.error.toLowerCase().includes('invalid'))) ||
+         data.error.toLowerCase().includes('invalid token') ||
+         data.error.toLowerCase().includes('jwt'))) ||
+      (typeof data === 'object' && data.mensaje && 
+        (data.mensaje.toLowerCase().includes('token') || 
+         data.mensaje.toLowerCase().includes('expired') ||
+         data.mensaje.toLowerCase().includes('invalid token') ||
+         data.mensaje.toLowerCase().includes('jwt'))) ||
       (typeof data === 'string' && 
-        (data.toLowerCase().includes('token') || 
-         data.toLowerCase().includes('expired')))
+        (data.toLowerCase().includes('token expired') || 
+         data.toLowerCase().includes('invalid token') ||
+         data.toLowerCase().includes('jwt expired')))
     );
     
-    // Si es error de autenticación, cerrar sesión
-    if (isAuthError || hasTokenError) {
+    // Solo cerrar sesión si es un error de token, NO por falta de permisos
+    if (hasTokenError && status === 401) {
       console.warn('⚠️ Sesión expirada o token inválido. Cerrando sesión...');
       
       // Limpiar localStorage

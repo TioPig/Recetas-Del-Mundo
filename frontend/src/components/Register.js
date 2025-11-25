@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -7,6 +7,10 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { register } from '../api';
 
 export default function Register(){
@@ -15,9 +19,19 @@ export default function Register(){
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirigir al inicio si ya está autenticado
+    const token = localStorage.getItem('authToken');
+    if (token && token !== 'null' && token !== 'undefined' && token.trim() !== '') {
+      navigate('/');
+    }
+  }, [navigate]);
 
   const handleRegister = async () => {
     setError(null);
@@ -91,7 +105,7 @@ export default function Register(){
 
       <Container maxWidth={false} disableGutters sx={{ py: 0, backgroundColor: '#F7FAFC', pb: 0 }}>
         <Grid container spacing={0} alignItems="stretch" sx={{ minHeight: '70vh', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-          <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: { xs: 3, sm: 4, md: 6 }, minWidth: { md: '50%' } }}>
+          <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: { xs: 3, sm: 4, md: 6 }, minWidth: { md: '50%' }, mx: { xs: 'auto', md: 0 } }}>
             <Box sx={{ width: '100%', maxWidth: 500 }}>
               <Typography
                 variant="h5"
@@ -169,9 +183,27 @@ export default function Register(){
                   label="Contraseña" 
                   value={password} 
                   onChange={(e)=> setPassword(e.target.value)} 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'}
                   fullWidth 
                   required
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(s => !s)}
+                          edge="end"
+                          sx={{
+                            color: '#667EEA',
+                            '&:hover': {
+                              backgroundColor: 'rgba(102, 126, 234, 0.1)'
+                            }
+                          }}
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
@@ -189,9 +221,27 @@ export default function Register(){
                   label="Confirmar Contraseña" 
                   value={password2} 
                   onChange={(e)=> setPassword2(e.target.value)} 
-                  type="password" 
+                  type={showPassword2 ? 'text' : 'password'}
                   fullWidth 
                   required
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword2(s => !s)}
+                          edge="end"
+                          sx={{
+                            color: '#667EEA',
+                            '&:hover': {
+                              backgroundColor: 'rgba(102, 126, 234, 0.1)'
+                            }
+                          }}
+                        >
+                          {showPassword2 ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,

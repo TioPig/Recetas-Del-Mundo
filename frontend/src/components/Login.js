@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
@@ -21,6 +21,14 @@ export default function Login(){
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirigir al inicio si ya está autenticado
+    const token = localStorage.getItem('authToken');
+    if (token && token !== 'null' && token !== 'undefined' && token.trim() !== '') {
+      navigate('/');
+    }
+  }, [navigate]);
 
   const handleSubmit = async () => {
     setError(null);
