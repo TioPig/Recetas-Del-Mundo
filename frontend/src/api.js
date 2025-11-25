@@ -246,7 +246,7 @@ export const deleteStarReceta = (estrellaId) => {
 export const getEstrellaStats = (recetaId) => api.get(`/recetas/estrellas/stats/${recetaId}`);
 export const getMeGustaCount = (recetaId) => api.get(`/recetas/megustas/count/${recetaId}`);
 
-export const getUserNombre = (userId) => api.get(`/usuarios/${userId}`);
+export const getUserNombre = (userId) => api.get(`/usuarios/id/${userId}`);
 export const getRecetaNombre = (recetaId) => api.get(`/recetas/${recetaId}`);
 
 export const getComentariosReceta = (recetaId) => api.get(`/recetas/comentarios/receta/${recetaId}`);

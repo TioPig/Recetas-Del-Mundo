@@ -110,9 +110,11 @@ export default function Paises(){
                       src={p.urlImagen || 'https://placehold.co/300x200?text=No+Image'} 
                       alt={p.nombre} 
                       sx={{ 
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain'
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: 2,
+                        border: '3px solid rgba(102, 126, 234, 0.4)'
                       }} 
                       onError={(e)=>{ e.target.src='https://placehold.co/300x200?text=No+Image'; }} 
                     />
