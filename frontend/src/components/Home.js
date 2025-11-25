@@ -723,6 +723,23 @@ require('owl.carousel');export default function Home(){
             </Box>
             {currentRecipe ? (
               <>
+                {/* Imagen de la receta - visible en móvil */}
+                <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 2 }}>
+                  <Box 
+                    component="img" 
+                    src={currentRecipe.urlImagen || 'https://placehold.co/624x352?text=No+Image'} 
+                    alt={currentRecipe.nombre} 
+                    sx={{ 
+                      width: '100%', 
+                      height: { xs: 240, sm: 300 }, 
+                      objectFit: 'cover', 
+                      borderRadius: 3,
+                      boxShadow: '0 4px 16px rgba(102, 126, 234, 0.2)'
+                    }} 
+                    onError={(e)=>{ e.target.src='https://placehold.co/624x352?text=No+Image'; }} 
+                  />
+                </Box>
+
                 <Typography variant="h6" sx={{ fontFamily: 'Roboto, sans-serif', fontWeight: 900, color: '#1A202C', mb: 1, fontSize: { xs: '1rem', md: '1.25rem' } }} id="recetaDelDiaNombre">
                   {currentRecipe.nombre}
                 </Typography>
@@ -855,6 +872,7 @@ require('owl.carousel');export default function Home(){
               <Typography>Cargando recetas...</Typography>
             )}
           </Box>
+          {/* Imagen de la receta - visible solo en desktop */}
           <Box sx={{ flex: '1 1 100%', md: '1 1 50%', display: { xs: 'none', md: 'flex' }, justifyContent: 'center', alignItems: 'flex-start' }}>
             {currentRecipe ? (
               <Box 
@@ -1287,6 +1305,7 @@ function PaisesPreview(){
         borderRadius: '12px !important',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1) !important',
         backgroundColor: 'white !important',
+        border: '3px solid rgba(102, 126, 234, 0.4) !important',
         '@media (min-width: 600px)': {
           width: '317px !important',
           height: '238px !important',

@@ -57,7 +57,7 @@ export default function DonacionSuccess() {
               idDonacion: donacion.idDonacion || donacion.id_donacion || sessionId,
               monto: donacion.amount ? donacion.amount / 100 : 0, // Convertir centavos a dólares
               moneda: donacion.currency?.toUpperCase() || 'USD',
-              fecha: donacion.fechaCreacion || donacion.fecha_creacion || new Date().toISOString(),
+              fecha: donacion.fechaCreacion || donacion.fecha_creacion || new Date().toISOString(), // Dejar como array o ISO string
               estado: donacion.status === 'PAID' ? 'completado' : donacion.status?.toLowerCase() || 'completado',
               stripePaymentIntent: donacion.stripePaymentIntent || donacion.stripe_payment_intent
             });
@@ -126,7 +126,28 @@ export default function DonacionSuccess() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
+    
+    console.log('📅 formatDate input:', dateString, 'type:', typeof dateString, 'isArray:', Array.isArray(dateString));
+    
+    // Si dateString es un array [año, mes, día, hora, minuto, segundo, nanosegundos]
+    // del backend Spring Boot (LocalDateTime serializado)
+    if (Array.isArray(dateString) && dateString.length >= 3) {
+      const [year, month, day, hour = 0, minute = 0, second = 0] = dateString;
+      // Mes en JavaScript es 0-indexed, pero el backend envía 1-indexed
+      const date = new Date(year, month - 1, day, hour, minute, second);
+      console.log('📅 Created date from array:', date.toString());
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    // Si es una string ISO normal
     const date = new Date(dateString);
+    console.log('📅 Created date from string:', date.toString());
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
@@ -138,10 +159,12 @@ export default function DonacionSuccess() {
 
   const formatCurrency = (amount, currency = 'USD') => {
     if (!amount) return 'N/A';
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: currency.toUpperCase()
+    const formatted = new Intl.NumberFormat('es-ES', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
+    return `${currency.toUpperCase()} $${formatted}`;
   };
 
   if (loading) {

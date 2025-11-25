@@ -77,6 +77,17 @@ export default function DonationAmountDialog({ open, onClose, onConfirm }) {
       await onConfirm(finalAmount);
     } catch (error) {
       console.error('Error al procesar donación:', error);
+      
+      // Verificar si es un error de autenticación (401)
+      if (error.response?.status === 401) {
+        alert('⚠️ Tu sesión ha expirado. Por favor, inicia sesión nuevamente para continuar con la donación.');
+        // El interceptor de axios ya redirigirá al login
+      } else {
+        // Otros errores
+        const mensaje = error.response?.data?.mensaje || error.message || 'Error al procesar la donación';
+        alert(`❌ Error: ${mensaje}`);
+      }
+      
       setLoading(false);
     }
   };
