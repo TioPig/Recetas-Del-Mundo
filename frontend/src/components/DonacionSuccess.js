@@ -55,7 +55,7 @@ export default function DonacionSuccess() {
               message: 'Tu donación ha sido procesada exitosamente',
               sessionId: sessionId,
               idDonacion: donacion.idDonacion || donacion.id_donacion || sessionId,
-              monto: donacion.amount ? donacion.amount / 100 : 0, // Convertir centavos a dólares
+              monto: donacion.amount || 0, // El backend ahora envía el monto en dólares directamente
               moneda: donacion.currency?.toUpperCase() || 'USD',
               fecha: donacion.fechaCreacion || donacion.fecha_creacion || new Date().toISOString(), // Dejar como array o ISO string
               estado: donacion.status === 'PAID' ? 'completado' : donacion.status?.toLowerCase() || 'completado',
@@ -88,18 +88,18 @@ export default function DonacionSuccess() {
           const savedDate = sessionStorage.getItem('lastDonationDate');
           
           if (savedAmount) {
-            amountInDollars = parseFloat(savedAmount) / 100;
+            amountInDollars = parseFloat(savedAmount); // El monto ya está en dólares
             donationDate = savedDate || new Date().toISOString();
           } else if (amountParam) {
             // Fallback a URL parameter
-            amountInDollars = parseFloat(amountParam) / 100;
+            amountInDollars = parseFloat(amountParam); // El monto ya está en dólares
             donationDate = new Date().toISOString();
           } else {
             amountInDollars = 0.50;
             donationDate = new Date().toISOString();
           }
         } catch (e) {
-          amountInDollars = amountParam ? parseFloat(amountParam) / 100 : 0.50;
+          amountInDollars = amountParam ? parseFloat(amountParam) : 0.50;
           donationDate = new Date().toISOString();
         }
         
