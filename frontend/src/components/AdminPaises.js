@@ -26,6 +26,7 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon
 } from '@mui/icons-material';
+import SearchFilter from './SearchFilter';
 import { adminGetPaises, adminCreatePais, adminUpdatePais, adminDeletePais } from '../api';
 
 function AdminPaises() {
@@ -37,6 +38,7 @@ function AdminPaises() {
   const [selectedPais, setSelectedPais] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     urlImagen: '',
@@ -162,7 +164,14 @@ function AdminPaises() {
     setPage(0);
   };
 
-  const paginatedPaises = paises.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Filtrar países según búsqueda
+  const filteredPaises = paises.filter(pais => {
+    return searchTerm === '' || 
+      pais.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pais.idPais?.toString().includes(searchTerm);
+  });
+
+  const paginatedPaises = filteredPaises.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   if (loading) {
     return (
@@ -176,7 +185,7 @@ function AdminPaises() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-          Gestión de Países
+          Gestión de Países ({filteredPaises.length})
         </Typography>
         <Fab color="primary" size="medium" onClick={handleAdd} title="Agregar País">
           <AddIcon />
@@ -185,6 +194,13 @@ function AdminPaises() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>{success}</Alert>}
+
+      <SearchFilter
+        searchValue={searchTerm}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        searchPlaceholder="Buscar por nombre o ID..."
+        showFilter={false}
+      />
 
       <TableContainer component={Paper}>
         <Table>
@@ -215,7 +231,7 @@ function AdminPaises() {
                 <TableCell>
                   {pais.estado === 1 ? 'Activo' : 'Inactivo'}
                 </TableCell>
-                <TableCell>{pais.idUsr}</TableCell>
+                <TableCell>{pais.usuario?.nombre || pais.usuario?.correo || pais.idUsr || 'N/A'}</TableCell>
                 <TableCell>
                   <IconButton 
                     size="small" 

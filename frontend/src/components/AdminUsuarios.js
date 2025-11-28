@@ -29,6 +29,7 @@ import {
   Cancel as CancelIcon
 } from '@mui/icons-material';
 import { adminGetUsuarios, adminUpdateUsuario, adminDeleteUsuario, formatFecha } from '../api';
+import SearchFilter from './SearchFilter';
 
 function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -39,6 +40,8 @@ function AdminUsuarios() {
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRol, setFilterRol] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -147,7 +150,20 @@ function AdminUsuarios() {
     setPage(0);
   };
 
-  const paginatedUsuarios = usuarios.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Filtrar usuarios según búsqueda y filtro
+  const filteredUsuarios = usuarios.filter(usuario => {
+    const matchesSearch = searchTerm === '' || 
+      usuario.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.correo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.idUsr?.toString().includes(searchTerm);
+    
+    const matchesRol = filterRol === '' || usuario.perfil?.nombre === filterRol;
+    
+    return matchesSearch && matchesRol;
+  });
+
+  const paginatedUsuarios = filteredUsuarios.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   if (loading) {
     return (
@@ -160,11 +176,26 @@ function AdminUsuarios() {
   return (
     <Box>
       <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-        Gestión de Usuarios ({usuarios.length})
+        Gestión de Usuarios ({filteredUsuarios.length})
       </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>{success}</Alert>}
+
+      <SearchFilter
+        searchValue={searchTerm}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        searchPlaceholder="Buscar por ID, nombre, apellido o correo..."
+        filterValue={filterRol}
+        onFilterChange={(e) => setFilterRol(e.target.value)}
+        filterLabel="Filtrar por Rol"
+        showFilter={true}
+        filterOptions={[
+          { value: 'USER', label: 'Usuario' },
+          { value: 'LIDER', label: 'Líder' },
+          { value: 'ADMIN', label: 'Administrador' }
+        ]}
+      />
 
       <TableContainer component={Paper}>
         <Table>

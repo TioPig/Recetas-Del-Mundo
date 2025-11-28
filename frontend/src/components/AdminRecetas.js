@@ -27,7 +27,11 @@ import {
   Divider,
   ListItemSecondaryAction,
   Rating,
-  TablePagination
+  TablePagination,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -38,6 +42,7 @@ import {
   ThumbUp as ThumbUpIcon,
   Star as StarIcon
 } from '@mui/icons-material';
+import SearchFilter from './SearchFilter';
 import { 
   adminGetRecetas, 
   adminUpdateReceta, 
@@ -51,7 +56,9 @@ import {
   adminGetMeGustasByReceta,
   adminDeleteMeGusta,
   adminGetEstrellasByReceta,
-  adminDeleteEstrella
+  adminDeleteEstrella,
+  adminGetPaises,
+  adminGetCategorias
 } from '../api';
 
 function AdminRecetas() {
@@ -70,6 +77,10 @@ function AdminRecetas() {
   const [calificaciones, setCalificaciones] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPais, setFilterPais] = useState('');
+  const [filterCategoria, setFilterCategoria] = useState('');
+  const [filterEstado, setFilterEstado] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     urlImagen: '',
@@ -83,12 +94,43 @@ function AdminRecetas() {
   const loadRecetas = async () => {
     try {
       setLoading(true);
-      const response = await adminGetRecetas();
-      const recetasList = response.data || [];
-      setRecetas(recetasList);
+      
+      // Cargar recetas, países y categorías en paralelo
+      const [recetasResponse, paisesResponse, categoriasResponse] = await Promise.all([
+        adminGetRecetas(),
+        adminGetPaises(),
+        adminGetCategorias()
+      ]);
+      
+      const recetasList = recetasResponse.data || [];
+      const paisesList = paisesResponse.data || [];
+      const categoriasList = categoriasResponse.data || [];
+      
+      // Crear mapas para búsqueda rápida
+      const paisesMap = {};
+      paisesList.forEach(pais => {
+        paisesMap[pais.idPais] = pais;
+      });
+      
+      const categoriasMap = {};
+      categoriasList.forEach(categoria => {
+        categoriasMap[categoria.idCat] = categoria;
+      });
+      
+      // Enriquecer recetas con datos de país y categoría
+      const recetasEnriquecidas = recetasList.map(receta => ({
+        ...receta,
+        pais: paisesMap[receta.idPais] || null,
+        categoria: categoriasMap[receta.idCat] || null
+      }));
+      
+      console.log('Recetas enriquecidas:', recetasEnriquecidas);
+      console.log('Primera receta enriquecida:', recetasEnriquecidas[0]);
+      
+      setRecetas(recetasEnriquecidas);
       
       // Cargar estadísticas para todas las recetas
-      const statsPromises = recetasList.map(async (receta) => {
+      const statsPromises = recetasEnriquecidas.map(async (receta) => {
         try {
           const [estrellasRes, likesRes] = await Promise.all([
             getEstrellaStats(receta.idReceta).catch((err) => {
@@ -408,8 +450,21 @@ function AdminRecetas() {
     setPage(0);
   };
 
+  // Filtrar recetas según búsqueda y filtros
+  const filteredRecetas = recetas.filter(receta => {
+    const matchesSearch = searchTerm === '' || 
+      receta.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      receta.idReceta?.toString().includes(searchTerm);
+    
+    const matchesPais = filterPais === '' || receta.pais?.nombre === filterPais;
+    const matchesCategoria = filterCategoria === '' || receta.categoria?.nombre === filterCategoria;
+    const matchesEstado = filterEstado === '' || receta.estado === parseInt(filterEstado);
+    
+    return matchesSearch && matchesPais && matchesCategoria && matchesEstado;
+  });
+
   // Calcular recetas paginadas
-  const paginatedRecetas = recetas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedRecetas = filteredRecetas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   if (loading) {
     return (
@@ -422,11 +477,61 @@ function AdminRecetas() {
   return (
     <Box>
       <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-        Gestión de Recetas ({recetas.length})
+        Gestión de Recetas ({filteredRecetas.length})
       </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>{success}</Alert>}
+
+      <SearchFilter
+        searchValue={searchTerm}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        searchPlaceholder="Buscar por nombre o ID..."
+        showFilter={false}
+      />
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, mt: 2, flexWrap: 'wrap' }}>
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>País</InputLabel>
+          <Select
+            value={filterPais}
+            onChange={(e) => setFilterPais(e.target.value)}
+            label="País"
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {[...new Set(recetas.map(r => r.pais?.nombre).filter(Boolean))].map(nombre => (
+              <MenuItem key={nombre} value={nombre}>{nombre}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Categoría</InputLabel>
+          <Select
+            value={filterCategoria}
+            onChange={(e) => setFilterCategoria(e.target.value)}
+            label="Categoría"
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {[...new Set(recetas.map(r => r.categoria?.nombre).filter(Boolean))].map(nombre => (
+              <MenuItem key={nombre} value={nombre}>{nombre}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Estado</InputLabel>
+          <Select
+            value={filterEstado}
+            onChange={(e) => setFilterEstado(e.target.value)}
+            label="Estado"
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="1">Activa</MenuItem>
+            <MenuItem value="0">Inactiva</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       <TableContainer component={Paper}>
         <Table>
@@ -448,8 +553,8 @@ function AdminRecetas() {
               <TableRow key={receta.idReceta} hover>
                 <TableCell>{receta.idReceta}</TableCell>
                 <TableCell>{receta.nombre}</TableCell>
-                <TableCell>{receta.idPais}</TableCell>
-                <TableCell>{receta.idCat}</TableCell>
+                <TableCell>{receta.pais?.nombre || 'N/A'}</TableCell>
+                <TableCell>{receta.categoria?.nombre || 'N/A'}</TableCell>
                 <TableCell>
                   <Chip 
                     label={receta.estado === 1 ? 'Activo' : 'Inactivo'} 

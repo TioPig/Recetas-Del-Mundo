@@ -26,6 +26,7 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon
 } from '@mui/icons-material';
+import SearchFilter from './SearchFilter';
 import { adminGetCategorias, adminCreateCategoria, adminUpdateCategoria, adminDeleteCategoria } from '../api';
 
 function AdminCategorias() {
@@ -37,6 +38,7 @@ function AdminCategorias() {
   const [selectedCategoria, setSelectedCategoria] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     urlImagen: '',
@@ -171,7 +173,14 @@ function AdminCategorias() {
     setPage(0);
   };
 
-  const paginatedCategorias = categorias.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Filtrar categorías según búsqueda
+  const filteredCategorias = categorias.filter(categoria => {
+    return searchTerm === '' || 
+      categoria.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      categoria.idCat?.toString().includes(searchTerm);
+  });
+
+  const paginatedCategorias = filteredCategorias.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   if (loading) {
     return (
@@ -185,7 +194,7 @@ function AdminCategorias() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-          Gestión de Categorías
+          Gestión de Categorías ({filteredCategorias.length})
         </Typography>
         <Fab color="primary" size="medium" onClick={handleAdd} title="Agregar Categoría">
           <AddIcon />
@@ -194,6 +203,13 @@ function AdminCategorias() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>{success}</Alert>}
+
+      <SearchFilter
+        searchValue={searchTerm}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        searchPlaceholder="Buscar por nombre o ID..."
+        showFilter={false}
+      />
 
       <TableContainer component={Paper}>
         <Table>
@@ -224,7 +240,7 @@ function AdminCategorias() {
                 <TableCell>
                   {categoria.estado === 1 ? 'Activo' : 'Inactivo'}
                 </TableCell>
-                <TableCell>{categoria.idUsr}</TableCell>
+                <TableCell>{categoria.usuario?.nombre || categoria.usuario?.correo || categoria.idUsr || 'N/A'}</TableCell>
                 <TableCell>
                   <IconButton 
                     size="small" 
