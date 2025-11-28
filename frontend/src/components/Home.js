@@ -99,8 +99,8 @@ require('owl.carousel');export default function Home(){
     if (!recipes || recipes.length === 0) return null;
     
     // El backend ya envía ordenadas de menor a mayor (10 al 1)
-    // Por lo tanto, la mejor receta es la ÚLTIMA del array (posición 9 si hay 10)
-    return recipes[recipes.length - 1];
+    // Por lo tanto, la mejor receta es la PRIMERA del array (posición 0 = ranking 1)
+    return recipes[0];
   };
 
   useEffect(()=>{

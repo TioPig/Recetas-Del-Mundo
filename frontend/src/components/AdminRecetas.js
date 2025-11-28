@@ -437,7 +437,6 @@ function AdminRecetas() {
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>País</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Categoría</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Estado</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Visitas</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Likes</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Estrellas</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Fecha</TableCell>
@@ -458,7 +457,6 @@ function AdminRecetas() {
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{receta.visitas || 0}</TableCell>
                 <TableCell>
                   <Chip 
                     label={recetasStats[receta.idReceta]?.likesCount || 0}
@@ -563,7 +561,6 @@ function AdminRecetas() {
                     <Chip label={`Estado: ${selectedReceta.estado === 1 ? 'Activo' : 'Inactivo'}`} color={selectedReceta.estado === 1 ? 'success' : 'default'} />
                     <Chip label={`País ID: ${selectedReceta.idPais}`} />
                     <Chip label={`Categoría ID: ${selectedReceta.idCat}`} />
-                    <Chip label={`Visitas: ${selectedReceta.visitas || 0}`} />
                     <Chip label={`Likes: ${recetasStats[selectedReceta.idReceta]?.likesCount || 0}`} color="primary" variant="outlined" />
                     <Chip label={`⭐ ${recetasStats[selectedReceta.idReceta]?.avgStars?.toFixed(1) || '0.0'} (${recetasStats[selectedReceta.idReceta]?.totalStars || 0} votos)`} color="warning" variant="outlined" />
                     <Chip label={`Usuario ID: ${selectedReceta.idUsr}`} />
