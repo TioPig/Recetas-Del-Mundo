@@ -13,7 +13,7 @@ skinparam component {
   BorderColor #1B4965
 }
 
-actor "Usuario (Web/Móvil)" as User
+actor "Usuario" as User
 node "Cliente" as Client {
   [Navegador / App]
 }
