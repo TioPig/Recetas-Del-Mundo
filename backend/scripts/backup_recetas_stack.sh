@@ -12,6 +12,7 @@ BACKUP_DIR="${BACKUP_DIR:-$ROOT_DIR/backups}"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 TMP_DIR="$(mktemp -d "$BACKUP_DIR/backup_tmp.XXXXXX")"
 
+
 # Contenedores / volumenes por defecto (ajusta si tu compose usa otros nombres)
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-api-recetas-postgres}"
 POSTGRES_DB="${POSTGRES_DB:-api_recetas_postgres}"
@@ -19,6 +20,8 @@ POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_VOLUME="${POSTGRES_VOLUME:-postgres_data}"
 PGADMIN_VOLUME="${PGADMIN_VOLUME:-pgadmin_data}"
 BACKEND_IMAGE_NAME="${BACKEND_IMAGE_NAME:-api-recetas_final-backend:latest}"
+# Si FRONTEND_IMAGE no está definida, usar el valor real de producción
+FRONTEND_IMAGE="${FRONTEND_IMAGE:-tiopig1324/recetas-del-mundo:frontend-latest}"
 COMPOSE_FILE="${COMPOSE_FILE:-$ROOT_DIR/docker-compose.yml}"
 RETENTION_DAYS="${RETENTION_DAYS:-7}"
 

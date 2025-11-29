@@ -28,11 +28,11 @@ else inválido
 end
 
 note over Client
-  Recomendaciones:
-  - Usar JWT con expiración y refresh token.
+  Recomendaciones de seguridad:
+  - Uso JWT con expiración y refresh token.
   - Proteger endpoints críticos con roles (`perfil`).
   - JWT: actualmente HS256 (HMAC) en el proyecto. Almacenar `JWT_SECRET` en un vault o variables de entorno seguras.
-  - Implementar revocación/blacklist para refresh tokens (ej. Redis) y validar `iss`, `aud`, `exp`, `jti`.
+  - Implementar revocación/blacklist para refresh tokens (ej. Redis).
 end note
 
 @enduml

@@ -42,23 +42,20 @@ Nginx --> API : HTTP (interna) / Proxy
 API -down-> PG : Consultas SQL
 API --> Redis : Cache / sesiones / rate-limit
 API --> External : Pagos y notificaciones
-API --> Worker : Encolar jobs (ej. thumbnails, backups)
-Worker --> PG : Tareas programadas / procesos en lote
+API --> Worker : jobs  backups
+Worker --> PG : Tareas programadas mantencion / procesos en lote
 ' Nota: las imágenes NO se almacenan en este servidor. Se usan servidores públicos/CDN.
 
 note bottom
   Componentes clave:
   - Backend: Spring Boot (`Springboot/`)
   - Base de datos: PostgreSQL 15
-  - Cache y sesiones: Redis (opcional pero recomendado)
-  - Imágenes: alojadas en servidores públicos / CDN (no se almacenan en el servidor)
-  - TLS/HTTPS: Reverse proxy (NGINX/Traefik) recomendada
+  - Cache y sesiones: Redis (recomendado)
+  - Imágenes: alojadas en servidores públicos / (no se almacenan en el servidor)
+  - TLS/HTTPS: Reverse proxy NGINX (recomendada)
   - Contenedores: Docker Compose disponible
 
-  Nota de despliegue (estado actual en este host):
-  - Contenedores en ejecución: `api-recetas-backend`, `api-recetas-postgres`, `api-recetas-pgadmin`.
-  - `frontend` está definido en `docker-compose.prod.yml`.
-  - `redis`, `nginx` y `worker` se representan en el diagrama como opcionales.
+  
 end note
 
 '' footer removed on request

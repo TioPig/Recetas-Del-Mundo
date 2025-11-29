@@ -201,34 +201,28 @@ note right
 
   * Unique / Índices relevantes:
     - categoria(nombre)
-    - ingrediente(lower(TRIM(nombre)))
-    - favorito(id_usr, id_receta)
-    - me_gusta(id_receta, id_usr)
     - pais(nombre)
     - perfil(nombre)
     - receta(nombre)
     - usuario(email)
     - sesion_pago(session_id)
+    - ingrediente(lower(TRIM(nombre)))
+    - favorito(id_usr, id_receta)
+    - me_gusta(id_receta, id_usr)
 
   * Foreign Keys (child.column -> parent.column) : constraint_name
-    - categoria.id_usr -> usuario.id_usr : categoria_id_usr_fkey
-    - comentario.id_receta -> receta.id_receta : comentario_receta_fkey
-    - comentario.id_usr -> usuario.id_usr : comentario_usuario_fkey
-    - donacion.id_receta -> receta.id_receta : donacion_id_receta_fk
-    - donacion.id_usr -> usuario.id_usr : donacion_id_usr_fk
-    - estrella.id_receta -> receta.id_receta : fkrxcbprpobmiqkdxmoo32ylkld
-    - estrella.id_usr -> usuario.id_usr : fkfey8w00kt60dhi2c4i96dj4b2
-    - favorito.id_receta -> receta.id_receta : fkh7xyncd05syjb4qbrc87i0da2
-    - favorito.id_usr -> usuario.id_usr : fkrq0y1oifowf2v3iu8mtqqidvs
-    - ingrediente.id_receta -> receta.id_receta : fk_ingrediente_receta
-    - me_gusta.id_usr -> usuario.id_usr : fklt9disbee9m0fbsu33vxh7qdy
-    - me_gusta.id_receta -> receta.id_receta : fkeu6k9bc9cdoikmwh3xc81oy48
-    - pais.id_usr -> usuario.id_usr : pais_id_usr_fkey
+    - usuario.id_perfil -> perfil.id_perfil : usuario_id_perfil_fk
+    - receta.id_usr -> usuario.id_usr : receta_id_usr_fkey
     - receta.id_cat -> categoria.id_cat : receta_id_cat_fkey
     - receta.id_pais -> pais.id_pais : receta_id_pais_fkey
-    - receta.id_usr -> usuario.id_usr : receta_id_usr_fkey
     - sesion_pago.id_donacion -> donacion.id_donacion : fk_sesion_pago_donacion
-    - usuario.id_perfil -> perfil.id_perfil : usuario_id_perfil_fk
+    - ingrediente.id_receta -> receta.id_receta : ingrediente_id_receta_fkey
+    - comentario.id_receta -> receta.id_receta : comentario_id_receta_fkey
+    - me_gusta.id_receta -> receta.id_receta : megusta_id_receta_fkey
+    - favorito.id_receta -> receta.id_receta : favorito_id_receta_fkey
+    - estrella.id_receta -> receta.id_receta : estrella_id_receta_fkey
+    - donacion.id_receta -> receta.id_receta : donacion_id_receta_fkey
+
 end note
 
 footer
