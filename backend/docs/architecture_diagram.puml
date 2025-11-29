@@ -20,6 +20,8 @@ node "Cliente" as Client {
 
 node "Reverse Proxy (NGINX)" as Nginx
 
+rectangle "Frontend (SPA / estático)" as Frontend
+
 rectangle "API Gateway / Backend" as Backend {
   [Spring Boot (API REST)] as API
 }
@@ -38,7 +40,9 @@ rectangle "Servicios externos" as External {
 
 User --> Client : Interacción UI
 Client --> Nginx : HTTPS (TLS)
+Nginx --> Frontend : Servir estáticos / Proxy assets
 Nginx --> API : HTTP (interna) / Proxy
+Frontend --> API : Llamadas API (HTTP)
 API -down-> PG : Consultas SQL
 API --> Redis : Cache / sesiones / rate-limit
 API --> External : Pagos y notificaciones
