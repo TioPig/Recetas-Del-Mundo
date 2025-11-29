@@ -1,0 +1,72 @@
+Instrucciones paso a paso para recolectar logs en el servidor de produccion
+
+IMPORTANTE: Nunca pegues ni compartas contraseñas o claves secretas en un chat público.
+Usa estas instrucciones desde tu terminal SSH tras hacer login con tus credenciales.
+
+1) Conectarte por SSH (ejemplo)
+   ssh -p 5145 root@168.181.187.137
+
+2) Diagnóstico rápido: qué está escuchando en el puerto 80
+   sudo ss -ltnp | grep ':80' || sudo lsof -i :80
+   # Esto muestra si es nginx (systemd) o un proceso/docker (PID y binario).
+
+3) Si nginx corre como servicio del host (systemd)
+   sudo journalctl -u nginx -n 500 --no-pager > ~/logs/nginx_journal.log
+   sudo tail -n 200 /var/log/nginx/error.log > ~/logs/nginx_error.log || true
+   sudo tail -n 200 /var/log/nginx/access.log > ~/logs/nginx_access.log || true
+
+4) Si nginx está dentro de un contenedor Docker
+   docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}" > ~/logs/docker_ps.txt
+   # Logs del contenedor (sustituye el nombre si es distinto)
+   docker logs --tail 500 recetas-frontend > ~/logs/frontend.log 2>&1 || true
+   # Si necesitas los archivos dentro del contenedor:
+   docker exec -it recetas-frontend -- sh -c "tail -n 200 /var/log/nginx/error.log > /tmp/frontend_error.log && tail -n 200 /var/log/nginx/access.log > /tmp/frontend_access.log"
+   docker cp recetas-frontend:/tmp/frontend_error.log ~/logs/frontend_error.log 2>/dev/null || true
+   docker cp recetas-frontend:/tmp/frontend_access.log ~/logs/frontend_access.log 2>/dev/null || true
+
+5) Logs de pgAdmin (contenedor)
+   docker logs --tail 500 api-recetas-pgadmin > ~/logs/pgadmin.log 2>&1 || true
+
+6) Logs de backend y traefik (si aplica)
+   docker logs --tail 500 api-recetas-backend > ~/logs/backend.log 2>&1 || true
+   docker logs --tail 500 traefik > ~/logs/traefik.log 2>&1 || true
+
+7) Comprobar puertos publicados por compose
+   cd /ruta/del/deploy || cd ~/deploy
+   docker compose -f docker-compose.prod.yml ps > ~/logs/compose_ps.txt
+   docker compose -f docker-compose.prod.yml config > ~/logs/compose_config.txt
+
+8) Crear carpeta y empaquetar logs
+   mkdir -p ~/logs
+   # (asegúrate de haber redirigido los comandos previos a ~/logs/*)
+   tar -czf ~/logs_produccion_$(date +%Y%m%d_%H%M%S).tar.gz -C ~ logs
+   ls -lh ~/logs_produccion_*.tar.gz
+
+9) Redactar secretos automáticamente (opcional y aproximado)
+   # Este sed elimina líneas que contengan patrones típicos. Revisa el resultado antes de compartir.
+   sed -n '/STRIPE_SECRET_KEY/!p' ~/logs/nginx_error.log | sed '/JWT_SECRET/d' > ~/logs/nginx_error.redacted.log
+
+10) Transferir o compartir el tar.gz
+   # Recomendado: subir el tar.gz a un espacio seguro (S3/Drive) y compartir enlace privado.
+   # Alternativa: usar scp para copiarlo a tu máquina local
+   scp -P 5145 root@168.181.187.137:~/logs_produccion_YYYYMMDD_HHMMSS.tar.gz .
+
+11) Copiar/paste de fragmentos útiles (si no subes tar)
+   - Pega sólo las últimas 200 líneas de `nginx_error.log` y de `docker logs api-recetas-pgadmin`.
+   - Usa bloques de código al pegar aquí.
+
+12) Comandos útiles adicionales
+   # Ver versiones y estado de Docker
+   docker version
+   docker info
+   # Ver procesos del sistema que escuchan en 80 (alternativa)
+   sudo netstat -ltnp | grep ':80'
+
+Qué necesito que me envíes (mínimo)
+- Últimas 200 líneas de `/var/log/nginx/error.log` o `docker logs recetas-frontend` (si nginx está en contenedor).
+- Últimas 200 líneas de `docker logs api-recetas-pgadmin`.
+- Salida de `docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Ports}}"` y de `sudo ss -ltnp | grep ':80'`.
+
+Si las pegás aquí, reviso y te propongo la corrección (ajuste en docker-compose, mover puertos, o configurar un reverse-proxy).
+
+NOTA FINAL: No pegues la contraseña en el chat. Ejecuta los comandos via SSH en el servidor y pega los resultados o súbelos como tar.gz.

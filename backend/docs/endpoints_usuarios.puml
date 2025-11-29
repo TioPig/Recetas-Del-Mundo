@@ -1,0 +1,19 @@
+@startuml
+title Endpoints - Usuarios
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 25
+skinparam ranksep 30
+scale 1.125
+
+package "Usuarios" {
+  [GET /usuarios]
+  [POST /usuarios]
+  [GET /usuarios/{id}]
+  [PUT /usuarios/{id}]
+  [DELETE /usuarios/{id}]
+}
+
+''
+
+@enduml

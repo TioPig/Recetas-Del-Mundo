@@ -1,0 +1,116 @@
+@startuml
+title Endpoints Completos - API Recetas del Mundo (orden ER)
+skinparam monochrome true
+skinparam defaultFontSize 20
+skinparam nodesep 6
+skinparam ranksep 16
+left to right direction
+scale 1.12
+
+
+package "Autenticación" {
+  [POST /auth/register]
+  [POST /auth/login]
+}
+
+package "Perfil" {
+  [GET /admin/perfil]
+  [POST /admin/perfil]
+  [GET /admin/perfil/{id}]
+  [PUT /admin/perfil/{id}]
+  [DELETE /admin/perfil/{id}]
+}
+
+package "Usuario" {
+  [GET /usuarios]
+  [POST /usuarios]
+  [GET /usuarios/{id}]
+  [PUT /usuarios/{id}]
+  [DELETE /usuarios/{id}]
+}
+
+package "Categoría" {
+  [GET /categorias]
+  [POST /categorias]
+  [GET /categorias/{id}]
+  [PUT /categorias/{id}]
+  [DELETE /categorias/{id}]
+}
+
+package "País" {
+  [GET /paises]
+  [POST /paises]
+  [GET /paises/{id}]
+  [PUT /paises/{id}]
+  [DELETE /paises/{id}]
+  [GET /paises/nombre/{nombre}]
+}
+
+package "Receta" {
+  [GET /recetas]
+  [POST /recetas]
+  [GET /recetas/{id}]
+  [PUT /recetas/{id}]
+  [DELETE /recetas/{id}]
+  [GET /recetas/usuario/{usuarioId}]
+  [GET /recetas/trending]
+  [GET /recetas/pais/{idPais}]
+  [GET /recetas/nombre/{nombre}]
+  [GET /recetas/del-dia]
+  [GET /recetas/carrusel]
+}
+
+package "Ingrediente" {
+  [GET /admin/ingredientes]
+  [POST /admin/ingredientes]
+  [GET /admin/ingredientes/{id}]
+  [PUT /admin/ingredientes/{id}]
+  [DELETE /admin/ingredientes/{id}]
+}
+
+package "Comentario" {
+  [GET /admin/comentarios]
+  [POST /admin/comentarios]
+  [GET /admin/comentarios/{id}]
+  [PUT /admin/comentarios/{id}]
+  [DELETE /admin/comentarios/{id}]
+}
+
+package "Me Gusta" {
+  [GET /admin/megusta]
+  [POST /admin/megusta]
+  [GET /admin/megusta/{id}]
+  [PUT /admin/megusta/{id}]
+  [DELETE /admin/megusta/{id}]
+  [POST /admin/megusta/toggle]
+  [GET /admin/megusta/receta/{recetaId}/count]
+}
+
+package "Favorito" {
+  [GET /admin/favoritos]
+  [POST /admin/favoritos]
+  [GET /admin/favoritos/{id}]
+  [PUT /admin/favoritos/{id}]
+  [DELETE /admin/favoritos/{id}]
+}
+
+package "Estrella" {
+  [GET /admin/estrellas]
+  [POST /admin/estrellas]
+  [GET /admin/estrellas/{id}]
+  [PUT /admin/estrellas/{id}]
+  [DELETE /admin/estrellas/{id}]
+  [GET /admin/estrellas/receta/{recetaId}]
+  [GET /admin/estrellas/receta/{recetaId}/promedio]
+}
+
+package "Receta del Día" {
+  [GET /recetas/del-dia]
+}
+
+package "Donación" {
+  [POST /recetas/donaciones]
+  [POST /admin/donaciones]
+}
+
+@enduml

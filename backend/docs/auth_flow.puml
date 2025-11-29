@@ -1,0 +1,38 @@
+@startuml
+title Flujo de Autenticación - API Recetas del Mundo
+skinparam defaultFontSize 20
+actor Usuario
+participant "Cliente (UI)" as Client
+participant "Spring Boot (API REST)" as API
+participant "DB (Postgres)" as DB
+participant "Redis / Session" as Redis
+
+Usuario -> Client : Introduce credenciales
+Client -> API : POST /auth/login {email,password}
+API -> DB : Verificar usuario y contraseña (bcrypt)
+DB --> API : Usuario válido / hash
+alt credenciales válidas
+  API -> Redis : Crear sesión / token (opcional)
+  API --> Client : 200 OK + JWT / session cookie
+else credenciales inválidas
+  API --> Client : 401 Unauthorized
+end
+
+Client -> API : Acceso a recurso protegido (Authorization)
+API -> Redis : Validar sesión / token
+alt token válido
+  API -> DB : Obtener usuario / permisos
+  API --> Client : 200 / recurso
+else inválido
+  API --> Client : 401 / 403
+end
+
+note over Client
+  Recomendaciones:
+  - Usar JWT con expiración y refresh token.
+  - Proteger endpoints críticos con roles (`perfil`).
+  - JWT: actualmente HS256 (HMAC) en el proyecto. Almacenar `JWT_SECRET` en un vault o variables de entorno seguras.
+  - Implementar revocación/blacklist para refresh tokens (ej. Redis) y validar `iss`, `aud`, `exp`, `jti`.
+end note
+
+@enduml

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portafolio de Título | Arquitectura ms-recetas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(120deg, #f3e8ff 0%, #f1f5f9 60%, #e0e7ff 100%);
+            color: #0f172a;
+            min-height: 100vh;
+            letter-spacing: 0.01em;
+        }
+        .ascii-diagram {
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', 'Segoe UI Mono', 'Roboto Mono', 'Courier New', monospace;
+            white-space: pre;
+            font-size: 0.82em;
+            line-height: 1.35;
+            color: #0f172a;
+        }
+        .ascii-wrap {
+            background: rgba(255,255,255,0.75);
+            border: 2.5px solid #a78bfa;
+            padding: 2rem 1.5rem;
+            border-radius: 22px;
+            box-shadow: 0 12px 40px 0 rgba(91,33,182,0.10), 0 2px 12px rgba(236,72,153,0.09);
+            backdrop-filter: blur(6px);
+            transition: box-shadow 0.3s, background 0.3s, border-color 0.18s;
+        }
+        .ascii-wrap:hover {
+            background: rgba(255,255,255,0.92);
+            box-shadow: 0 24px 64px rgba(91,33,182,0.16), 0 4px 18px rgba(236,72,153,0.13);
+            border-color: #7c3aed;
+        }
+        .brand-gradient {
+            background: linear-gradient(90deg, #7c3aed 0%, #ec4899 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section-title {
+            background: linear-gradient(90deg, #7c3aed 0%, #ec4899 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.01em;
+        }
+        .card {
+            background: rgba(255,255,255,0.85);
+            border-radius: 22px;
+            box-shadow: 0 6px 24px rgba(91,33,182,0.10);
+            border: 2.5px solid #a78bfa;
+            transition: transform 0.18s, box-shadow 0.18s, background 0.18s, border-color 0.18s;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -60px; left: -60px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, #c4b5fd 0%, transparent 70%);
+            opacity: 0.18;
+            z-index: 0;
+        }
+        .card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 18px 48px rgba(91,33,182,0.18);
+            background: rgba(243,232,255,0.97);
+        }
+        .card > * { position: relative; z-index: 1; }
+        .nav-link {
+            position: relative;
+            transition: color 0.2s;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+        .nav-link::after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 2.5px;
+            background: linear-gradient(90deg, #7c3aed 0%, #ec4899 100%);
+            transition: width 0.3s;
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            border-radius: 2px;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .nav-link:hover {
+            color: #a21caf;
+        }
+        .api-endpoint {
+            transition: box-shadow 0.22s, transform 0.22s, background 0.22s, border-color 0.18s;
+            background: rgba(255,255,255,0.92);
+            border: 2.5px solid #a78bfa;
+            position: relative;
+        }
+        .api-endpoint:hover {
+            box-shadow: 0 12px 32px rgba(91,33,182,0.13);
+            transform: translateY(-3px) scale(1.015);
+            background: #f3e8ff;
+        }
+        .api-endpoint code {
+            font-size: 1.08em;
+        }
+        .footer {
+            background: linear-gradient(90deg, #ede9fe 0%, #fdf2f8 100%);
+            color: #7c3aed;
+            border-top: 1.5px solid #e9d5ff;
+            box-shadow: 0 -2px 16px rgba(124,58,237,0.04);
+        }
+        /* Animaciones fade-in */
+        .animate-fade-in { opacity: 0; animation: fadeIn 1.1s ease forwards; }
+        .animate-fade-in-slow { opacity: 0; animation: fadeIn 1.8s 0.3s ease forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: none; }
+        }
+        /* Iconos SVG para tarjetas */
+        .icon {
+            width: 2.2em; height: 2.2em; display: inline-block; vertical-align: middle; margin-bottom: 0.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="bg-white/80 shadow-lg sticky top-0 z-50 backdrop-blur-lg">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold section-title tracking-tight drop-shadow-lg">Portafolio de Título</h1>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#intro" class="nav-link text-slate-600">Introducción</a>
+                <a href="#arquitectura" class="nav-link text-slate-600">Arquitectura</a>
+                <a href="#endpoints" class="nav-link text-slate-600">Endpoints</a>
+                <a href="#detalles" class="nav-link text-slate-600">Detalles Clave</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Sección de Introducción -->
+        <section id="intro" class="text-center mb-20">
+            <h2 class="text-5xl font-extrabold mb-4 section-title animate-fade-in">Proyecto <span class="brand-gradient">ms-recetas</span></h2>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto animate-fade-in-slow">
+                Una API RESTful robusta para una aplicación de recetas, con un enfoque en seguridad, escalabilidad e integración de servicios de terceros para pagos.
+            </p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card p-6 animate-fade-in">
+                    <div class="mb-2"><svg class="icon" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 2v4m8-4v4"/></svg></div>
+                    <h3 class="font-bold text-lg text-indigo-600 mb-2">Frontend</h3>
+                    <p class="text-slate-600">App cliente desarrollada con <strong>React</strong> para una experiencia de usuario fluida en web y móvil.</p>
+                </div>
+                <div class="card p-6 animate-fade-in">
+                    <div class="mb-2"><svg class="icon" fill="none" stroke="#ec4899" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 8h8v8H8z"/></svg></div>
+                    <h3 class="font-bold text-lg text-pink-600 mb-2">Backend</h3>
+                    <p class="text-slate-600">Microservicio con <strong>Spring Boot</strong> que centraliza la lógica de negocio, autenticación y gestión de datos.</p>
+                </div>
+                <div class="card p-6 animate-fade-in">
+                    <div class="mb-2"><svg class="icon" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="10"/><path d="M4 12h16"/></svg></div>
+                    <h3 class="font-bold text-lg text-emerald-600 mb-2">Base de Datos</h3>
+                    <p class="text-slate-600"><strong>PostgreSQL</strong> como sistema de persistencia, garantizando la integridad y consistencia de los datos.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Arquitectura -->
+        <section id="arquitectura" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-10 section-title">Diagrama de Arquitectura de Software</h2>
+            <div class="ascii-wrap overflow-x-auto animate-fade-in">
+                <div class="modern-diagram w-full">
+                    <!-- Inline SVG diagram: responsive, modern look -->
+                    <svg viewBox="0 0 1200 420" width="100%" height="auto" preserveAspectRatio="xMidYMid meet" class="mx-auto">
+                        <defs>
+                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="8" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.08"/>
+                            </filter>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                                <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+                            </marker>
+                        </defs>
+
+                        <!-- User / Frontend -->
+                        <g transform="translate(40,40)">
+                            <rect x="0" y="0" width="220" height="90" rx="14" fill="#ffffff" stroke="#a78bfa" stroke-width="2.5" filter="url(#shadow)"/>
+                            <text x="28" y="30" font-size="16" font-weight="600" fill="#0f172a">Usuario</text>
+                            <text x="28" y="56" font-size="13" fill="#475569">React (Frontend)</text>
+                        </g>
+
+                        <!-- Edge / LB -->
+                        <g transform="translate(320,40)">
+                            <rect x="0" y="0" width="200" height="90" rx="12" fill="#eef2ff" stroke="#6366f1" stroke-width="2.5"/>
+                            <text x="18" y="36" font-size="15" font-weight="600" fill="#3730a3">Edge / Load Balancer</text>
+                            <text x="18" y="56" font-size="12" fill="#475569">Nginx / Cloud LB (HTTPS)</text>
+                        </g>
+
+                        <!-- Backend -->
+                        <g transform="translate(560,20)">
+                            <rect x="0" y="0" width="340" height="160" rx="16" fill="#ffffff" stroke="#a78bfa" stroke-width="3" filter="url(#shadow)"/>
+                            <text x="22" y="34" font-size="16" font-weight="700" fill="#0f172a">Backend: ms-recetas (Spring Boot)</text>
+                            <text x="22" y="60" font-size="13" fill="#475569">Auth (BCrypt, JWT) · Controllers · Services</text>
+
+                            <!-- small service boxes -->
+                            <rect x="26" y="78" width="120" height="50" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
+                            <text x="36" y="105" font-size="12" fill="#0f172a">Auth / JWT</text>
+
+                            <rect x="156" y="78" width="150" height="50" rx="10" fill="#fff7ed" stroke="#fed7aa"/>
+                            <text x="166" y="105" font-size="12" fill="#92400e">Payments / Flow</text>
+                        </g>
+
+                        <!-- Database -->
+                        <g transform="translate(560,200)">
+                            <rect x="0" y="0" width="220" height="90" rx="12" fill="#ecfdf5" stroke="#bbf7d0"/>
+                            <text x="18" y="34" font-size="15" font-weight="600" fill="#065f46">PostgreSQL</text>
+                            <text x="18" y="56" font-size="12" fill="#065f46">Tables: usuario, pago, receta...</text>
+                        </g>
+
+                        <!-- Flow external -->
+                        <g transform="translate(940,40)">
+                            <rect x="0" y="0" width="200" height="90" rx="12" fill="#fff1f2" stroke="#fecaca"/>
+                            <text x="18" y="36" font-size="15" font-weight="600" fill="#9f1239">Flow (Pago)</text>
+                            <text x="18" y="56" font-size="12" fill="#7f1d1d">Webhook / Checkout</text>
+                        </g>
+
+                        <!-- arrows -->
+                        <line x1="260" y1="85" x2="320" y2="85" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+                        <line x1="520" y1="85" x2="560" y2="85" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+                        <line x1="760" y1="150" x2="760" y2="190" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+                        <line x1="900" y1="85" x2="940" y2="85" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+                        <line x1="780" y1="235" x2="940" y2="100" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+                    </svg>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="card p-4">
+                            <h4 class="font-semibold text-sm text-slate-700">Frontend</h4>
+                            <p class="text-sm text-slate-500">React — llamadas HTTPS a la API.</p>
+                        </div>
+                        <div class="card p-4">
+                            <h4 class="font-semibold text-sm text-slate-700">Backend</h4>
+                            <p class="text-sm text-slate-500">Spring Boot: Auth, endpoints, persistencia y pagos.</p>
+                        </div>
+                        <div class="card p-4">
+                            <h4 class="font-semibold text-sm text-slate-700">Storage & Pago</h4>
+                            <p class="text-sm text-slate-500">Postgres y proveedor de pagos (Flow) vía webhook.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Endpoints -->
+        <section id="endpoints" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-10 section-title">Endpoints Principales de la API</h2>
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <div class="api-endpoint bg-white p-4 rounded-lg shadow border flex items-center space-x-4">
+                    <span class="font-mono text-sm bg-blue-100 text-blue-800 font-bold py-1 px-3 rounded-full">POST</span>
+                    <code class="text-slate-800 font-medium">/usuarios</code>
+                    <span class="text-slate-500 text-sm ml-auto text-right">Crea un nuevo usuario con contraseña encriptada.</span>
+                </div>
+                <div class="api-endpoint bg-white p-4 rounded-lg shadow border flex items-center space-x-4">
+                    <span class="font-mono text-sm bg-blue-100 text-blue-800 font-bold py-1 px-3 rounded-full">POST</span>
+                    <code class="text-slate-800 font-medium">/usuarios/login</code>
+                    <span class="text-slate-500 text-sm ml-auto text-right">Autentica y devuelve un token JWT.</span>
+                </div>
+                <div class="api-endpoint bg-white p-4 rounded-lg shadow border flex items-center space-x-4">
+                    <span class="font-mono text-sm bg-green-100 text-green-800 font-bold py-1 px-3 rounded-full">POST</span>
+                    <code class="text-slate-800 font-medium">/engagement/*</code>
+                    <span class="text-slate-500 text-sm ml-auto text-right">Gestiona interacciones como comentarios, likes y ratings (protegido).</span>
+                </div>
+                 <div class="api-endpoint bg-white p-4 rounded-lg shadow border flex items-center space-x-4">
+                    <span class="font-mono text-sm bg-purple-100 text-purple-800 font-bold py-1 px-3 rounded-full">POST</span>
+                    <code class="text-slate-800 font-medium">/flow/button</code>
+                    <span class="text-slate-500 text-sm ml-auto text-right">Genera una orden de pago para el cliente.</span>
+                </div>
+                <div class="api-endpoint bg-white p-4 rounded-lg shadow border flex items-center space-x-4">
+                    <span class="font-mono text-sm bg-purple-100 text-purple-800 font-bold py-1 px-3 rounded-full">POST</span>
+                    <code class="text-slate-800 font-medium">/flow/webhook</code>
+                    <span class="text-slate-500 text-sm ml-auto text-right">Recibe notificaciones de pago asíncronas de Flow.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Detalles Clave -->
+        <section id="detalles">
+            <h2 class="text-3xl font-bold text-center mb-10 section-title">Detalles Clave de Implementación</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card p-6">
+                    <h3 class="font-bold text-lg text-slate-900 mb-3">Seguridad y Autenticación</h3>
+                    <p class="text-slate-600">Uso de <strong>BCrypt</strong> para el hashing de contraseñas y <strong>JWT</strong> para la autorización basada en tokens. Los endpoints protegidos validan la propiedad de los recursos (owner check) para prevenir accesos no autorizados.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="font-bold text-lg text-slate-900 mb-3">Integración de Pagos</h3>
+                    <p class="text-slate-600">El flujo de pagos es gestionado por un proveedor externo (Flow) de forma segura. El backend procesa los resultados a través de un <strong>webhook</strong>, manteniendo el sistema desacoplado y resiliente.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="font-bold text-lg text-slate-900 mb-3">Operaciones y DevOps</h3>
+                    <p class="text-slate-600">Se implementa <strong>logging estructurado</strong> para facilitar el monitoreo y la depuración. Los entornos están separados, con herramientas de desarrollo (ej. <code>/tools/hash</code>) deshabilitadas en producción para mayor seguridad.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-20 border-t">
+        <div class="container mx-auto px-6 py-8 text-center flex flex-col items-center gap-2">
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ede9fe"/><path d="M8 12l2 2 4-4" stroke="#a21caf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="font-bold text-lg brand-gradient">¡Gracias por tu atención!</span>
+            </div>
+            <p class="font-medium">&copy; 2025. Presentación para Portafolio de Título.<br>Desarrollado con <span class="brand-gradient font-bold">HTML</span> y <span class="brand-gradient font-bold">Tailwind CSS</span>.</p>
+        </div>
+    </footer>
+</body>
+<script>
+// Animaciones fade-in (mejoradas)
+document.querySelectorAll('.animate-fade-in').forEach((el, i) => {
+  el.style.opacity = 0;
+  el.style.transform = 'translateY(24px)';
+  setTimeout(() => {
+    el.style.transition = 'opacity 1.1s cubic-bezier(.4,0,.2,1), transform 1.1s cubic-bezier(.4,0,.2,1)';
+    el.style.opacity = 1;
+    el.style.transform = 'none';
+  }, 200 + i * 120);
+});
+document.querySelectorAll('.animate-fade-in-slow').forEach((el, i) => {
+  el.style.opacity = 0;
+  el.style.transform = 'translateY(32px)';
+  setTimeout(() => {
+    el.style.transition = 'opacity 1.8s cubic-bezier(.4,0,.2,1), transform 1.8s cubic-bezier(.4,0,.2,1)';
+    el.style.opacity = 1;
+    el.style.transform = 'none';
+  }, 600 + i * 200);
+});
+</script>
+</html>
+
+</body>
+</html>
