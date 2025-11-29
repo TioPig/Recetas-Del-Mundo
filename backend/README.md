@@ -4,222 +4,74 @@ Resumen ejecutivo
 ------------------
 
 `Recetas del Mundo` es una API REST diseñada para gestionar una colección curada de recetas, categorizadas por país y tipo, con un sistema completo de interacción social (comentarios, me gusta, favoritos y calificaciones). El proyecto está optimizado para producción con contenedores Docker, documentación OpenAPI y una arquitectura modular que facilita escalado y análisis.
+# Recetas del Mundo — API
 
-Solución y oportunidad
-----------------------
+Versión limpia y ordenada del README para el backend.
 
-- Problema: la dispersión y baja calidad de contenido gastronómico dificulta el descubrimiento y la validación de recetas auténticas.
-- Nuestra solución: una plataforma que combina datos normalizados, moderación por perfiles y métricas de interacción, facilitando descubrimiento y evaluación tanto para usuarios como investigadores.
+Descripción breve
+-----------------
+API REST contenerizada para gestionar recetas, categorías y las interacciones sociales asociadas (comentarios, favoritos, me gusta y calificaciones). Código backend principal en `Springboot/` y utilidades en `scripts/`.
 
-Puntos clave para inversores
----------------------------
-
-- Producto listo para demostración local y despliegue con `docker-compose`.
-- Datos y validación: dataset realista con ~658 recetas activas y 8 ingredientes promedio por receta (métricas de validación interna).
-- Monetización prevista: integraciones de pago (Stripe) para donaciones o contenido premium.
-
-Audiencia académica
--------------------
-
-El modelado de datos y las políticas de control de calidad permiten realizar estudios sobre normalización de recetas, análisis cultural por país, y métricas de interacción. El esquema relacional y las migraciones están documentadas en `docs/database_structure.sql` y las pruebas de integridad en `database/migrations`.
-
-Arquitectura & diagramas
-------------------------
-
-Todos los diagramas fuente están en `docs/` en formato PlantUML (`*.puml`). Se incluyen:
-- `docs/er_diagram_actualizado.puml` — Modelo entidad-relación principal.
-- `docs/architecture_diagram.puml` — Arquitectura de alto nivel.
-- `docs/auth_flow.puml` — Flujo de autenticación.
-- `docs/endpoints_overview.puml` — Resumen de endpoints.
-
-Para regenerar SVG/PNG vea `docs/README_DIAGRAMS.md`.
-
-- Tecnologías principales
-----------------------
-
-- Backend: Node.js + Express (archivos `app.js`, `index.js`)
-- Base de datos: PostgreSQL 15
-- Contenedores: Docker & Docker Compose
-- Documentación API: OpenAPI (especificación disponible vía Swagger UI cuando la aplicación está en marcha)
-- Cache / sesiones: Redis (opcionalmente usado para sesiones y rate-limiting)
-- Entrega y seguridad: reverse proxy (NGINX) con TLS/HTTPS para el sitio público
-----------------------
-
-- Backend: Node.js + Express (archivos `app.js`, `index.js`)
-- Base de datos: PostgreSQL 15
-- Contenedores: Docker & Docker Compose
-- Documentación API: OpenAPI (especificación disponible vía Swagger UI cuando la aplicación está en marcha)
-
-Instalación rápida (desarrollo)
--------------------------------
--------------------------------
-
-Requisitos: `docker`, `docker-compose`, `PowerShell` (Windows)
-
-```powershell
-# 1) Construir y levantar servicios
-docker-compose up --build -d
-
-# 2) Ver logs del backend
-docker-compose logs -f backend
-
-# 3) Acceder a la API (ejemplo)
-curl http://localhost:3000/recetas
-```
-
-Nota sobre HTTPS
-----------------
-
-En despliegues de producción se recomienda frontear la API y los assets estáticos con un reverse proxy (por ejemplo `nginx`) que gestione certificados TLS (Let's Encrypt) y redireccione tráfico HTTP a HTTPS. Si usa Docker Compose, puede añadir un servicio `nginx` o `traefik` para manejar TLS.
-
-Ejemplo rápido (concepto):
-
-```yaml
-# fragmento de `docker-compose.yml` para referencia
-services:
-	nginx:
-		image: nginx:stable
-		ports:
-			- "80:80"
-			- "443:443"
-		volumes:
-			- ./nginx/conf.d:/etc/nginx/conf.d
-			- ./certs:/etc/ssl/certs
-		depends_on:
-			- backend
-
-	backend:
-		build: .
-		environment:
-			- NODE_ENV=production
-```
-
-Si necesita, puedo generar ejemplos concretos de `nginx.conf` y archivos para Let's Encrypt.
-
-Ejecución local sin Docker
---------------------------
-
-1. Instalar dependencias: `npm install`
-2. Configurar `config.js` (variables de BD, puerto)
-3. Ejecutar: `npm start` o `node index.js`
-
--API y documentación
--------------------
-
-- OpenAPI completa: disponible vía Swagger UI cuando la aplicación esté en marcha
-- Endpoints detallados: `docs/ENDPOINTS-COMPLETOS.md`
-
-Roadmap técnico (prioridades)
------------------------------
-
-1. Mejoras en la experiencia de búsqueda y recomendaciones.
-2. Pipeline ETL para normalizar recetas y extraer metadatos nutricionales.
-3. Dashboard analítico para métricas de interacción.
-
-Contribución y estilo
-----------------------
-
-Por favor, antes de abrir un Pull Request:
-- Ejecutar linters y pruebas (si aplican).
-- Mantener el estilo del repositorio y documentar cambios en `README.md`.
-
-Contacto
---------
-
-Para presentaciones o reuniones con inversores, sugiere contactar a: `claudio@example.com` (sustituir por contacto real). Para soporte técnico usar issues en el repositorio.
-
-Licencia
---------
-
-Este repositorio se distribuye bajo la licencia MIT (si desea otra, actualizar aquí).
-# 🍽️ API Recetas del Mundo — Resumen ejecutivo y guía técnica
-
-Versión profesional del README, alineada con la presentación técnica en `docs/presentation_architecture.html`. Este documento está pensado para CTOs, equipos DevOps e inversores: resume la propuesta de valor, arquitectura, operaciones críticas y cómo arrancar el sistema.
-
-## Resumen ejecutivo
-
-API Recetas del Mundo es una API RESTful contenerizada, diseñada para producción con Docker y portable a Kubernetes. Ofrece:
-
-- Backend modular en Spring Boot con autenticación JWT y hashing con BCrypt.
-- Modelo relacional en PostgreSQL 15 optimizado para búsquedas por país y categoría.
-- Funcionalidad social y de monetización: favoritos, comentarios, rating y donaciones.
-- Estrategia operativa: imágenes reproducibles, Pipelines (integración y despliegue continuos), backups automáticos y pruebas de restore.
-
-Estado actual: API operativa y validada (ver `docs/ENDPOINTS-COMPLETOS.md` para la lista completa — ~42 endpoints confirmados).
-
----
-
-## Visión rápida
-
-Este repositorio contiene el backend de "Recetas del Mundo": una API REST construida con Spring Boot y PostgreSQL que gestiona recetas, ingredientes, interacciones (favoritos, me gusta, estrellas, comentarios), usuarios, categorías y donaciones (Stripe).
-
----
-
-## Contenido
-
+Contenido clave del repositorio (ruta `backend/`)
 - `Springboot/` — código del backend (Java, Maven).
--- `docs/` — documentación técnica: diagramas ER, SVGs de arquitectura y flujos, listas de tablas/columnas/constraints y guía de endpoints completa.
-- `scripts/` — scripts para backup, E2E automatizados en PowerShell y utilidades.
-- `database/` — utilitarios y conexión a la base de datos.
+- `docs/` — diagramas PlantUML, SVG y PNG generados (`*.puml`, `*.svg`, `*.png`).
+- `database/` — scripts SQL y migraciones.
+- `scripts/` — utilidades para backup, generación de diagramas y tareas E2E.
 
----
+Diagramas
+---------
+Las imágenes principales están en `docs/` (PNG y SVG). Principales archivos:
 
-## Resumen rápido
+- `docs/architecture_diagram.png` — visión de alto nivel de la arquitectura.
+- `docs/er_diagram.png` — diagrama entidad-relación (tablas, PK, FK, índices relevantes).
+- `docs/auth_flow.png` — flujo de autenticación (JWT).
+- `docs/endpoints_overview.png` — mapa de endpoints.
+- `docs/endpoints_*.png` — diagramas por módulo (usuarios, recetas, donaciones, admin, paises/categorias).
 
-- API lista para ejecución local en `http://localhost:8081`.
-- Endpoints principales: `/auth`, `/usuarios`, `/categorias`, `/paises`, `/recetas` (incluye CRUD y muchas rutas de interacción).
-- Documentación OpenAPI: disponible vía Swagger UI cuando la aplicación esté en marcha.
-
----
-
-## Requisitos
-
-- Java 21+ (el backend de esta rama se compiló y ejecuta con JDK 21)
-- Maven 3.6+
-- Docker
-- Docker Compose (o `docker compose` integrado)
-- PostgreSQL (solo si ejecutas la DB fuera de Docker)
-- Spring Boot (solo para desarrollo local)
-
----
-
-## Cómo ejecutar
-
-### Compilar y ejecutar el JAR
-
-1. Compila el proyecto:
+Regenerar diagramas
+-------------------
+Se proporcionó un script para regenerar PNG/SVG desde los `.puml`:
 
 ```powershell
-cd Springboot
-mvn -DskipTests package
+.\scripts\generate_from_puml.ps1 -Width 1200
 ```
 
-2. Ejecuta el JAR:
+Instalación y ejecución (desarrollo)
+-----------------------------------
+Requisitos: `Java` (según la implementación en `Springboot/`), `maven` (si compila localmente), `docker` y `docker-compose` para levantar servicios rápidamente.
+
+Arranque rápido con Docker Compose:
 
 ```powershell
-java -jar target/api-recetas-0.0.1-SNAPSHOT.jar --server.port=8081
-```
-
-### Usar Docker Compose (si está configurado en la raíz)
-
-```powershell
-docker compose build backend
-docker compose up -d backend
-```
-
-### Uso de docker-compose: `docker-compose.yml` vs `docker-compose.prod.yml`
-
-Este repositorio mantiene dos archivos `docker-compose` con roles distintos:
-
-- `docker-compose.yml` — Archivo principal pensado para desarrollo local. Contiene la sección `build:` para construir la imagen del backend desde `./Springboot`, monta el directorio `./database` para inicializadores y contiene valores por defecto para conveniencia (no recomendado para producción).
-- `docker-compose.prod.yml` — Variante orientada a producción. Usa imágenes (campo `image`) en vez de `build`, declara volúmenes como `external` (espera que los volúmenes ya existan en el host) y no incluye valores por defecto sensibles — exige que proveas las variables de entorno.
-
-Ejemplos de uso:
-
-```powershell
-# Desarrollo (con build local)
+# Construir y levantar servicios
 docker compose build backend
 docker compose up -d
+```
+
+Acceso local a la API (ejemplo):
+
+```powershell
+curl http://localhost:8081/recetas
+```
+
+Configuración
+-------------
+Edite `config.js` o las variables de entorno según su entorno (DB, Stripe, JWT). No deje secretos checked-in; use `.env` para desarrollo local y un gestor de secretos en producción.
+
+Contribuir
+---------
+Por favor mantenga el estilo del repositorio y documente cambios relevantes en PRs. Use las carpetas `scripts/` y `docs/` para utilidades y diagramas.
+
+Contacto y licencia
+-------------------
+Contacto: `dev@recetas.cl` (sustituir por el correo real).
+
+Licencia: MIT
+
+---
+
+Archivo generado: versión limpia del README creada el 23 Nov 2025
+
 
 # Producción (usar archivo prod y un .env con variables seguras)
 docker compose -f docker-compose.prod.yml --env-file .env up -d
